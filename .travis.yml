@@ -1,0 +1,22 @@
+language: python
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+before_install:
+  - pip install --upgrade setuptools pip
+install:
+  - pip install -r requirements.txt
+  - pip install -r test-requirements.txt
+script: python setup.py flake8
+deploy:
+  provider: pypi
+  user: allexx
+  password:
+    secure: wBS+ZpqRAl6R37xr3FGXKmc1hhvpUHxRE9nqQhuUUUw2EOopexgrC4YEpiXyfFwdajZfr/OqgYkb2mLSRqlmRc3NSWFbWMF8pkHJQr/bovkwTkjy1QLHNx7nqHYsnIxBE6BxkChhAsr5Qmo9fKyCy2CA2ahHvLDoBztuUaIB+kmlcRRLsCt52YtX9LGHEQBNlowxWkAgA3zKXwu/LPV5syQodh0y7y+XoYw1F9w4DasMxTOWhYqV2yCVTppgEf5RpJUutFP4L/kAaNiT593pd/B5qgLtyQrCRsRclKcrH4yMMBnnSGP2OKd5BRm7f4P65ck3SWWQSHRnBqxlwhkpSwP/6UcVUXHbryCHYHSpUBXYuFZmNZuChSjN5fy0px7F3q1DAzY4oEliZvzDyOuAWXntAWruaHbB0DI1y7kMMmJbeCjjLV7zb1h5gNDlmkeJlVfRhHxE0OxAwSAOnzIDa4jxMQQ8D87dpI5gnd4RxXpH0LUxeujpsN9LOTaoyq051pwvGANndafdcgO1o1xbwJyH8z+EvoIPj0WZW5ExUXikXFkaww2aBBS9G3BdP73jeilZbnM+qqI5liBmCRbYEDvh7S24GiwvfYf6IuuM+cYkZugA8FIZ6j5krwBk4q/0IuWbTPt5IRLzEm7rLDW3qRwlNqMpcMZNB5dCTbzej+s=
+  on:
+    tags: true
+    all_branches: true
+    distributions: sdist bdist_wheel
+    repo: ingrammicro/apsconnect-cli
