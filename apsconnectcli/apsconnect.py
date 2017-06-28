@@ -156,12 +156,14 @@ class APSConnectUtil:
 
         try:
             print("Loading config file: {}".format(config_file))
-            with open(config_file) as f:
-                config_data = f.read()
-            yaml.load(config_data)  # we only need to check if this is valid YAML or JSON
+            config_data, config_format = json.load(file(config_file)), 'json'
+        except ValueError as e:
+            if 'No JSON object' in str(e):
+                config_data, config_format = yaml.load(file(config_file)), 'yaml'
+            else:
+                raise
         except yaml.YAMLError as e:
             print("Config file should be valid JSON or YAML structure, error: {}".format(e))
-            exit(1)
         except Exception as e:
             print("Unable to read config file, error: {}".format(e))
             sys.exit(1)
@@ -571,7 +573,6 @@ def _create_secret(name, data_format, data, api, namespace='default', force=Fals
         config = yaml.dump(data, allow_unicode=True, default_flow_style=False)
     else:
         raise Exception("Unknown config data format: {}".format(data_format))
-    print(config)
     secret = {
         'apiVersion': 'v1',
         'data': {
