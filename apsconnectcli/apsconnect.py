@@ -155,10 +155,15 @@ class APSConnectUtil:
         """ Install connector-backend in the k8s cluster"""
 
         try:
-            config_data = yaml.load(open(config_file))
             print("Loading config file: {}".format(config_file))
+            config_data, config_format = json.load(file(config_file)), 'json'
+        except ValueError as e:
+            if 'No JSON object' in str(e):
+                config_data, config_format = yaml.load(file(config_file)), 'yaml'
+            else:
+                raise
         except yaml.YAMLError as e:
-            print('Config file should be valid JSON or YAML, error: {}'.format(e))
+            print("Config file should be valid JSON or YAML structure, error: {}".format(e))
         except Exception as e:
             print("Unable to read config file, error: {}".format(e))
             sys.exit(1)
@@ -176,7 +181,7 @@ class APSConnectUtil:
             sys.exit(1)
 
         try:
-            _create_secret(name, config_data, core_v1, namespace, force)
+            _create_secret(name, config_format, config_data, core_v1, namespace, force)
             print("Create config [ok]")
         except Exception as e:
             print("Can't create config in cluster, error: {}".format(e))
@@ -523,11 +528,18 @@ def _get_cfg():
     return cfg
 
 
-def _create_secret(name, data, api, namespace='default', force=False):
+def _create_secret(name, data_format, data, api, namespace='default', force=False):
+    if data_format == 'json':
+        config = json.dumps(data, ensure_ascii=False).encode('utf-8')
+    elif data_format == 'yaml':
+        config = yaml.dump(data, allow_unicode=True, default_flow_style=False)
+    else:
+        raise Exception("Unknown config data format: {}".format(data_format))
+    print(config)
     secret = {
         'apiVersion': 'v1',
         'data': {
-            'config': base64.b64encode(json.dumps(data).encode('utf-8')).decode(),
+            'config': base64.b64encode(config).decode(),
         },
         'kind': 'Secret',
         'metadata': {
