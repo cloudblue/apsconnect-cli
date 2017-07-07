@@ -355,6 +355,7 @@ class APSConnectUtil:
 
             # Collect ids for service template creation
             resource_types_ids = []
+            limited_resources = {}
 
             for type in core_resource_types_payload:
                 response = hub.addResourceType(**type)
@@ -362,7 +363,8 @@ class APSConnectUtil:
 
                 resource_types_ids.append(response['result']['resource_type_id'])
 
-            limited_resources_ids = list(resource_types_ids)
+            for id in list(resource_types_ids):
+                limited_resources[id] = 1
 
             user_resource_type_payload = {
                 'resclass_name': 'rc.saas.service',
@@ -415,6 +417,37 @@ class APSConnectUtil:
                 _osaapi_raise_for_status(response)
                 resource_types_ids.append(response['result']['resource_type_id'])
 
+            # Create parameters resource types
+            parameters = _get_parameters(tenant_schema_path)
+            parameters_ids = []
+
+            for parameter in parameters:
+                payload = {
+                    'resclass_name': "rc.saas.resource.unit",
+                    'name': '{} {}'.format(connector_name, parameter),
+                    'act_params': [
+                        {
+                            'var_name': 'app_id',
+                            'var_value': application_id
+                        },
+                        {
+                            'var_name': 'service_id',
+                            'var_value': "tenant"
+                        },
+                        {
+                            'var_name': 'resource_id',
+                            'var_value': parameter
+                        },
+                    ]
+                }
+
+                response = hub.addResourceType(**payload)
+                _osaapi_raise_for_status(response)
+
+                resource_types_ids.append(response['result']['resource_type_id'])
+                limited_resources[response['result']['resource_type_id']] = 0
+
+
             print("Resource types creation [ok]")
 
         # Create service template
@@ -439,8 +472,8 @@ class APSConnectUtil:
             'limits': [],
         }
 
-        for type_id in limited_resources_ids:
-            payload['limits'].append({'resource_id': type_id, 'resource_limit64': '1'})
+        for type_id, limit in limited_resources.items():
+            payload['limits'].append({'resource_id': type_id, 'resource_limit64': str(limit)})
 
         response = hub.setSTRTLimits(**payload)
         _osaapi_raise_for_status(response)
@@ -736,34 +769,31 @@ def _polling_service_access(name, api, namespace, timeout=120):
 
         time.sleep(10)
 
+def _get_resources(tenant_schema_path, type='Counter'):
+    resource_type = 'http://aps-standard.org/types/core/resource/1.0#{}'.format(type)
+    tenant_properties = _get_properties(tenant_schema_path)
+    resources = {}
+    for key in tenant_properties:
+        if tenant_properties[key]['type'] == resource_type:
+            resources[key] = (tenant_properties[key])
+
+    return resources
 
 def _get_counters(tenant_schema_path):
-    with open(tenant_schema_path) as tenant_file:
-        counter_type = 'http://aps-standard.org/types/core/resource/1.0#Counter'
+    return _get_resources(tenant_schema_path, 'Counter')
 
+def _get_parameters(tenant_schema_path):
+    return _get_resources(tenant_schema_path, 'Limit')
+
+def _get_properties(schema_path):
+    with open(schema_path) as file:
         try:
-            tenant_properties = json.load(tenant_file)['properties']
+            properties = json.load(file)['properties']
         except ValueError:
-            print("Tenant schema is not correct json file")
+            print("Schema is not correct json file")
             sys.exit(1)
 
-        counters = {}
-        for key in tenant_properties:
-            if tenant_properties[key]['type'] == counter_type:
-                counters[key] = (tenant_properties[key])
-
-        return counters
-
-
-def _get_properties(app_schema_path):
-    with open(app_schema_path) as app_file:
-        try:
-            app_properties = json.load(app_file)['properties']
-        except ValueError:
-            print("App schema is not correct json file")
-            sys.exit(1)
-
-        return app_properties
+        return properties
 
 
 def main():
