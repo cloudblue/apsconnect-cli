@@ -72,6 +72,7 @@ AUTH_TEMPLATE = {
         },
     ],
 }
+NULL_CFG_INFO = (None, None)
 
 
 class APSConnectUtil:
@@ -535,6 +536,16 @@ class APSConnectUtil:
         _osaapi_raise_for_status(r)
         print("APS Development mode {}.".format('DISABLED' if disable else 'ENABLED'))
 
+    def info(self):
+        """ Show current state of apsconnect-cli binding with Kubernetes cluster and OA Hub"""
+
+        kube_check = ("Kube cluster:", lambda: os.path.exists(KUBE_FILE_PATH), _get_cluster_info)
+        oa_hub_check = ("OA Hub:", lambda: os.path.exists(CFG_FILE_PATH), _get_hub_info)
+
+        for (item_name, check_config, get_info) in [oa_hub_check, kube_check]:
+            print(item_name)
+            print(_check_binding(check_config, get_info))
+
 
 def _get_aps_url(aps_host, aps_port, use_tls_aps):
     return '{}://{}:{}'.format('https' if use_tls_aps else 'http', aps_host, aps_port)
@@ -907,6 +918,50 @@ def _get_properties(schema_path):
             sys.exit(1)
 
         return properties
+
+
+def _check_binding(check_config, get_config_info):
+    state_not_initiated = "\tNot initiated"
+    state_is_ready = "\thost: {}\n\tuser: {}"
+    state_config_corrupted = "\tConfig file is corrupted: {}"
+
+    if not check_config():
+        return state_not_initiated
+
+    try:
+        info = get_config_info()
+    except Exception as e:
+        return state_config_corrupted.format(e)
+
+    if info == NULL_CFG_INFO:
+        return state_config_corrupted.format("binding attributes are not assigned")
+    else:
+        host, user = info
+        return state_is_ready.format(host, user)
+
+
+def _get_cluster_info():
+    with open(KUBE_FILE_PATH, 'r') as f:
+        kube_cfg = yaml.load(f.read())
+
+    if not isinstance(kube_cfg, dict):
+        return NULL_CFG_INFO
+
+    user = kube_cfg['users'][0]['user']['username']
+    host = kube_cfg['clusters'][0]['cluster']['server']
+    return (host, user)
+
+
+def _get_hub_info():
+    if not os.path.exists(CFG_FILE_PATH):
+        return NULL_CFG_INFO
+
+    with open(CFG_FILE_PATH) as f:
+        hub_cfg = json.load(f)
+
+    host = "{}:{}".format(hub_cfg['host'], hub_cfg['port'])
+    user = hub_cfg['user']
+    return (host, user)
 
 
 def main():
