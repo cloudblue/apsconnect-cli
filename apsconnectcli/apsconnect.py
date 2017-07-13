@@ -288,10 +288,10 @@ class APSConnectUtil:
 
             app_properties = _get_properties(app_schema_path)
 
-            if 'hubID' in app_properties:
+            if 'hubId' in app_properties:
                 payload.update({
                     'app': {
-                        'hubID': hub_id or str(uuid.uuid4()),
+                        'hubId': hub_id or str(uuid.uuid4()),
                     }
                 })
 
