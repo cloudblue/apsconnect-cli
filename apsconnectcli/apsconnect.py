@@ -161,6 +161,7 @@ class APSConnectUtil:
             yaml.load(config_data)  # we only need to check if this is valid YAML or JSON
         except yaml.YAMLError as e:
             print("Config file should be valid JSON or YAML structure, error: {}".format(e))
+            exit(1)
         except Exception as e:
             print("Unable to read config file, error: {}".format(e))
             sys.exit(1)
