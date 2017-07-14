@@ -155,10 +155,12 @@ class APSConnectUtil:
         """ Install connector-backend in the k8s cluster"""
 
         try:
-            config_data = yaml.load(open(config_file))
             print("Loading config file: {}".format(config_file))
+            with open(config_file) as f:
+                config_data = f.read()
+            yaml.load(config_data)  # we only need to check if this is valid YAML or JSON
         except yaml.YAMLError as e:
-            print('Config file should be valid JSON or YAML, error: {}'.format(e))
+            print("Config file should be valid JSON or YAML structure, error: {}".format(e))
         except Exception as e:
             print("Unable to read config file, error: {}".format(e))
             sys.exit(1)
@@ -560,7 +562,7 @@ def _create_secret(name, data, api, namespace='default', force=False):
     secret = {
         'apiVersion': 'v1',
         'data': {
-            'config': base64.b64encode(json.dumps(data).encode('utf-8')).decode(),
+            'config': base64.b64encode(data.encode('utf-8')).decode(),
         },
         'kind': 'Secret',
         'metadata': {
