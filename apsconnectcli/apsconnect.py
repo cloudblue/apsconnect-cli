@@ -233,6 +233,12 @@ class APSConnectUtil:
                 tenant_schema_path = zip_ref.extract('schemas/tenant.schema', tdir)
                 app_schema_path = zip_ref.extract('schemas/app.schema', tdir)
 
+                try:
+                    zip_ref.extract('schemas/user.schema', tdir)
+                    user_service = True
+                except KeyError:
+                    user_service = False
+
             tree = xml_et.ElementTree(file=meta_path)
             namespace = '{http://aps-standard.org/ns/2}'
             connector_id = tree.find('{}id'.format(namespace)).text
@@ -369,29 +375,30 @@ class APSConnectUtil:
             for id in list(resource_types_ids):
                 limited_resources[id] = 1
 
-            user_resource_type_payload = {
-                'resclass_name': 'rc.saas.service',
-                'name': '{} users'.format(connector_name),
-                'act_params': [
-                    {
-                        'var_name': 'app_id',
-                        'var_value': application_id
-                    },
-                    {
-                        'var_name': 'service_id',
-                        'var_value': 'user'
-                    },
-                    {
-                        'var_name': 'autoprovide_service',
-                        'var_value': '0'
-                    },
-                ]
-            }
+            if user_service:
+                user_resource_type_payload = {
+                    'resclass_name': 'rc.saas.service',
+                    'name': '{} users'.format(connector_name),
+                    'act_params': [
+                        {
+                            'var_name': 'app_id',
+                            'var_value': application_id
+                        },
+                        {
+                            'var_name': 'service_id',
+                            'var_value': 'user'
+                        },
+                        {
+                            'var_name': 'autoprovide_service',
+                            'var_value': '0'
+                        },
+                    ]
+                }
 
-            response = hub.addResourceType(**user_resource_type_payload)
-            _osaapi_raise_for_status(response)
+                response = hub.addResourceType(**user_resource_type_payload)
+                _osaapi_raise_for_status(response)
 
-            resource_types_ids.append(response['result']['resource_type_id'])
+                resource_types_ids.append(response['result']['resource_type_id'])
 
             # Create counters resource types
             counters = _get_counters(tenant_schema_path)
@@ -422,7 +429,6 @@ class APSConnectUtil:
 
             # Create parameters resource types
             parameters = _get_parameters(tenant_schema_path)
-            parameters_ids = []
 
             for parameter in parameters:
                 payload = {
@@ -449,7 +455,6 @@ class APSConnectUtil:
 
                 resource_types_ids.append(response['result']['resource_type_id'])
                 limited_resources[response['result']['resource_type_id']] = 0
-
 
             print("Resource types creation [ok]")
 
@@ -779,6 +784,7 @@ def _polling_service_access(name, api, namespace, timeout=120):
 
         time.sleep(10)
 
+
 def _get_resources(tenant_schema_path, type='Counter'):
     resource_type = 'http://aps-standard.org/types/core/resource/1.0#{}'.format(type)
     tenant_properties = _get_properties(tenant_schema_path)
@@ -789,11 +795,14 @@ def _get_resources(tenant_schema_path, type='Counter'):
 
     return resources
 
+
 def _get_counters(tenant_schema_path):
     return _get_resources(tenant_schema_path, 'Counter')
 
+
 def _get_parameters(tenant_schema_path):
     return _get_resources(tenant_schema_path, 'Limit')
+
 
 def _get_properties(schema_path):
     with open(schema_path) as file:
