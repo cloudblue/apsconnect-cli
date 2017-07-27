@@ -149,9 +149,8 @@ class APSConnectUtil:
                                  indent=4))
             print("Config saved [{}]".format(CFG_FILE_PATH))
 
-    def install_backend(self, name, image, config_file, healthcheck_path='/',
-                        root_path='/', namespace='default', replicas=2,
-                        force=False):
+    def install_backend(self, name, image, config_file, root_path='/', namespace='default',
+                        replicas=2, force=False):
         """ Install connector-backend in the k8s cluster"""
 
         try:
@@ -186,7 +185,7 @@ class APSConnectUtil:
             sys.exit(1)
 
         try:
-            _create_deployment(name, image, ext_v1, healthcheck_path, replicas,
+            _create_deployment(name, image, ext_v1, root_path, replicas,
                                namespace, force, core_api=core_v1)
             print("Create deployment [ok]")
         except Exception as e:
@@ -593,7 +592,7 @@ def _delete_secret(name, api, namespace):
             raise
 
 
-def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
+def _create_deployment(name, image, api, root_path='/', replicas=2,
                        namespace='default', force=False, core_api=None):
     template = {
         'apiVersion': 'extensions/v1beta1',
@@ -622,13 +621,13 @@ def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
                             ],
                             'livenessProbe': {
                                 'httpGet': {
-                                    'path': healthcheck_path,
+                                    'path': root_path,
                                     'port': 80,
                                 },
                             },
                             'readinessProbe': {
                                 'httpGet': {
-                                    'path': healthcheck_path,
+                                    'path': root_path,
                                     'port': 80,
                                 },
                             },
