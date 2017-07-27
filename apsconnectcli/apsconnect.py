@@ -421,7 +421,6 @@ class APSConnectUtil:
 
             # Create parameters resource types
             parameters = _get_parameters(tenant_schema_path)
-            parameters_ids = []
 
             for parameter in parameters:
                 payload = {
@@ -448,7 +447,6 @@ class APSConnectUtil:
 
                 resource_types_ids.append(response['result']['resource_type_id'])
                 limited_resources[response['result']['resource_type_id']] = 0
-
 
             print("Resource types creation [ok]")
 
@@ -771,6 +769,7 @@ def _polling_service_access(name, api, namespace, timeout=120):
 
         time.sleep(10)
 
+
 def _get_resources(tenant_schema_path, type='Counter'):
     resource_type = 'http://aps-standard.org/types/core/resource/1.0#{}'.format(type)
     tenant_properties = _get_properties(tenant_schema_path)
@@ -781,11 +780,14 @@ def _get_resources(tenant_schema_path, type='Counter'):
 
     return resources
 
+
 def _get_counters(tenant_schema_path):
     return _get_resources(tenant_schema_path, 'Counter')
 
+
 def _get_parameters(tenant_schema_path):
     return _get_resources(tenant_schema_path, 'Limit')
+
 
 def _get_properties(schema_path):
     with open(schema_path) as file:
