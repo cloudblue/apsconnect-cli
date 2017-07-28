@@ -576,7 +576,7 @@ def _create_secret(name, data_format, data, api, namespace='default', force=Fals
     secret = {
         'apiVersion': 'v1',
         'data': {
-            'config': base64.b64encode(json.dumps(data).encode('utf-8')).decode(),
+            'config': base64.b64encode(data.encode('utf-8')).decode(),
         },
         'kind': 'Secret',
         'metadata': {
