@@ -153,20 +153,21 @@ class APSConnectUtil:
                         root_path='/', namespace='default', replicas=2,
                         force=False):
         """ Install connector-backend in the k8s cluster"""
-
-        try:
-            print("Loading config file: {}".format(config_file))
-            config_data, config_format = json.load(file(config_file)), 'json'
-        except ValueError as e:
-            if 'No JSON object' in str(e):
-                config_data, config_format = yaml.load(file(config_file)), 'yaml'
-            else:
-                raise
-        except yaml.YAMLError as e:
-            print("Config file should be valid JSON or YAML structure, error: {}".format(e))
-        except Exception as e:
-            print("Unable to read config file, error: {}".format(e))
-            sys.exit(1)
+        with open(config_file) as config:
+            try:
+                print("Loading config file: {}".format(config_file))
+                config_data, config_format = json.load(config), 'json'
+            except ValueError as e:
+                if 'No JSON object' in str(e):
+                    config_data, config_format = yaml.load(config), 'yaml'
+                else:
+                    raise
+            except yaml.YAMLError as e:
+                print("Config file should be valid JSON or YAML structure, error: {}".format(e))
+                sys.exit(1)
+            except Exception as e:
+                print("Unable to read config file, error: {}".format(e))
+                sys.exit(1)
 
         api_client = _get_k8s_api_client()
         api = client.VersionApi(api_client)
@@ -576,7 +577,7 @@ def _create_secret(name, data_format, data, api, namespace='default', force=Fals
     secret = {
         'apiVersion': 'v1',
         'data': {
-            'config': base64.b64encode(data.encode('utf-8')).decode(),
+            'config': base64.b64encode(config).decode(),
         },
         'kind': 'Secret',
         'metadata': {
