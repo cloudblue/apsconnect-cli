@@ -82,6 +82,12 @@ Service template "connector" created with id=16 [ok]
 
 ## Misc
 
+#### Check utility version
+```
+⇒ apsconnect version
+apsconnect-cli v.1.6.11 built with love.
+```
+
 #### Generate Oauth credentials with helper command
 ```
 apsconnect generate-oauth [--namespace]
@@ -94,6 +100,12 @@ Secret:   14089074ca9a4abd80ba45a19baae693
 
 _Note that --source gets http(s):// or filepath argument._
 
+#### Validate the k8s cluster and grab some useful data
+```
+⇒ apsconnect check-backend
+Connect https://xxx [ok]
+Service nginx-ingress-controller IP x.x.x.x
+```
 
 #### Enable APS Development mode
 Allows using non-TLS connector-backend URL and [other features for debug](http://doc.apsstandard.org/2.2/process/test/tools/mn/#development-mode).
