@@ -170,6 +170,11 @@ class APSConnectUtil:
                   .format(lb.metadata._name, lb.status.load_balancer.ingress[0].ip))
         sys.exit(0)
 
+    def version(self):
+        import pkg_resources
+        print("apsconnect-cli v.{} built with love."
+              .format(pkg_resources.get_distribution('apsconnectcli').version))
+
     def install_backend(self, name, image, config_file, hostname, healthcheck_path='/',
                         root_path='/', namespace='default', replicas=2,
                         force=False):
