@@ -13,6 +13,8 @@ _A command line tool for APS connector installation on Odin Automation in the re
 pip install apsconnectcli
 ```
 
+### How to setup a kubernetes cluster
+[Read a good step-by-step instruction by JetStack team](https://github.com/jetstack/kube-lego/tree/master/examples/nginx)
 
 ## Usage
 
@@ -48,23 +50,26 @@ Config saved [/Users/allexx/.aps_config]
 #### 3. Install connector-backend in the k8s cluster
 
 ```
-apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE \
+apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE --hostname HOST \
                           [--healthcheck-path HEALTHCHECK_PATH] [--root-path ROOT_PATH] \
                           [--namespace NAMESPACE] [--replicas REPLICAS] [--force FORCE]
 ```
 
 ```
-⇒  apsconnect install-backend connector_name image config_file
-Loading config file: /Users/allexx/config
-Connected to cluster - https://127.222.183.40
+⇒  apsconnect install-backend connector_name image hostname config_file
+Loading config file: /Users/allexx/config_file
+Connect https://xxx [ok]
 Create config [ok]
 Create deployment [ok]
 Create service [ok]
+Create ingress [ok]
 Checking service availability
-.........
+.
 Expose service [ok]
-Connector backend - http://127.197.49.26/
+Connector backend - https://xxx
+[Success]
 ```
+
 #### 4. Install connector-frontend in Odin Automation Hub
 
 ```
