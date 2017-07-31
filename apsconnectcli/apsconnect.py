@@ -149,7 +149,6 @@ class APSConnectUtil:
                                  indent=4))
             print("Config saved [{}]".format(CFG_FILE_PATH))
 
-
     def check_backend(self):
         """ Validate k8s components and get useful information"""
         api_client = _get_k8s_api_client()
