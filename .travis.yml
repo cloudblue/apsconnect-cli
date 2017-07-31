@@ -1,20 +1,20 @@
 language: python
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
+- '2.7'
+- '3.4'
+- '3.5'
+- '3.6'
 before_install:
-  - pip install --upgrade setuptools pip
+- pip install --upgrade setuptools pip
 install:
-  - pip install -r requirements.txt
-  - pip install -r test-requirements.txt
+- pip install -r requirements.txt
+- pip install -r test-requirements.txt
 script: python setup.py flake8
 deploy:
   provider: pypi
-  user: allexx
+  user: apslite
   password:
-    secure: wBS+ZpqRAl6R37xr3FGXKmc1hhvpUHxRE9nqQhuUUUw2EOopexgrC4YEpiXyfFwdajZfr/OqgYkb2mLSRqlmRc3NSWFbWMF8pkHJQr/bovkwTkjy1QLHNx7nqHYsnIxBE6BxkChhAsr5Qmo9fKyCy2CA2ahHvLDoBztuUaIB+kmlcRRLsCt52YtX9LGHEQBNlowxWkAgA3zKXwu/LPV5syQodh0y7y+XoYw1F9w4DasMxTOWhYqV2yCVTppgEf5RpJUutFP4L/kAaNiT593pd/B5qgLtyQrCRsRclKcrH4yMMBnnSGP2OKd5BRm7f4P65ck3SWWQSHRnBqxlwhkpSwP/6UcVUXHbryCHYHSpUBXYuFZmNZuChSjN5fy0px7F3q1DAzY4oEliZvzDyOuAWXntAWruaHbB0DI1y7kMMmJbeCjjLV7zb1h5gNDlmkeJlVfRhHxE0OxAwSAOnzIDa4jxMQQ8D87dpI5gnd4RxXpH0LUxeujpsN9LOTaoyq051pwvGANndafdcgO1o1xbwJyH8z+EvoIPj0WZW5ExUXikXFkaww2aBBS9G3BdP73jeilZbnM+qqI5liBmCRbYEDvh7S24GiwvfYf6IuuM+cYkZugA8FIZ6j5krwBk4q/0IuWbTPt5IRLzEm7rLDW3qRwlNqMpcMZNB5dCTbzej+s=
+    secure: wA5257WHW0hWAwr+G1iBNbAUsHrsErB1/bHAD3mNpGoxGZUqggLiF+oHjKkdk/kzpCjyuPArzwHgJ0yCtjjMaNDg7x3LQsbmKkxW+tYIPmMEbKyVNBUVU8CzCnd9ktJp0jP0MFyRlzSmbiqYbF/Zt+jRZgOy8g/oMYtnv3ZgCskKY2MiedMZP8WDp/6jGb28zXxJC9VBrrMx8HAxBx7QLf2ez3JtTm1KBnQ3T2HKXDzvuYyhgB7FtfY7AAC7R3LSqu49oXNSCZ5RjvtMYup3zg77YLcb3fHyTWlVV+QwItikDZCCqPuJyhzZ9CkZpvUrh9dJYbL2Rs9Fnqt0U+wQly1YlnKQ620fUwRvFPV3B4h2m12QBbup4YCFiGufwlk53Wg/R1DuUNCs0RXw0oj+R9jECEuKtcdy7r4dOLWM4In7BT0Uxi0YM33bQcFDVWPAAMCkXCpo8zMvDhsozXbntcPhGar7inWVGf9qpXZzFduGYK8mYaDyKAHD355DzZ3i8kzeMatQj55RZA0fdPRPElkdfq4O28nwIXzmHLTsKnv1InrdBnvoay9lh29MuTojIeQ2A7UTwgrL06LQAASKoL8WG/N6rIXWLolX1NLydlYX2HsvC8eSHoF8YJKWZhlfcFdsyh137+oAPk1o3QrOUt9CgbC3SMsOw14//51gK5k=
   on:
     tags: true
     all_branches: true
