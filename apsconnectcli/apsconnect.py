@@ -175,9 +175,16 @@ class APSConnectUtil:
         print("apsconnect-cli v.{} built with love."
               .format(pkg_resources.get_distribution('apsconnectcli').version))
 
-    def install_backend(self, name, image, config_file, hostname, root_path='/',
-                        namespace='default', replicas=2, force=False):
+    def install_backend(self, name, image, config_file, hostname, healthcheck_path=False,
+                        root_path='/', namespace='default', replicas=2,
+                        force=False):
         """ Install connector-backend in the k8s cluster"""
+        if healthcheck_path:
+            print("WARNING --healthcheck-path is deprecated and will be dropped in future releases."
+                  " The connector should have the same value for root path and health check path.")
+        else:
+            healthcheck_path = root_path
+
         try:
             with open(config_file) as config:
                 print("Loading config file: {}".format(config_file))
@@ -207,7 +214,7 @@ class APSConnectUtil:
             sys.exit(1)
 
         try:
-            _create_deployment(name, image, ext_v1, root_path, replicas,
+            _create_deployment(name, image, ext_v1, healthcheck_path, replicas,
                                namespace, force, core_api=core_v1)
             print("Create deployment [ok]")
         except Exception as e:
@@ -641,7 +648,7 @@ def _delete_secret(name, api, namespace):
             raise
 
 
-def _create_deployment(name, image, api, root_path='/', replicas=2,
+def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
                        namespace='default', force=False, core_api=None):
     template = {
         'apiVersion': 'extensions/v1beta1',
@@ -670,13 +677,13 @@ def _create_deployment(name, image, api, root_path='/', replicas=2,
                             ],
                             'livenessProbe': {
                                 'httpGet': {
-                                    'path': root_path,
+                                    'path': healthcheck_path,
                                     'port': 80,
                                 },
                             },
                             'readinessProbe': {
                                 'httpGet': {
-                                    'path': root_path,
+                                    'path': healthcheck_path,
                                     'port': 80,
                                 },
                             },

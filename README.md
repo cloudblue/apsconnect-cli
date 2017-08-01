@@ -51,10 +51,10 @@ Config saved [/Users/allexx/.aps_config]
 
 ```
 apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE --hostname HOST \
-                          [--root-path ROOT_PATH] [--namespace NAMESPACE] [--replicas REPLICAS] \
-                          [--force FORCE]
+                          [--healthcheck-path HEALTHCHECK_PATH] [--root-path ROOT_PATH] \
+                          [--namespace NAMESPACE] [--replicas REPLICAS] [--force FORCE]
 ```
-__Note__: `--healthcheck-path` is deprecated as it should be the same value as `--root-path`
+
 ```
 ⇒  apsconnect install-backend connector_name image hostname config_file
 Loading config file: /Users/allexx/config_file
