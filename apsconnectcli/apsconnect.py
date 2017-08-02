@@ -175,10 +175,16 @@ class APSConnectUtil:
         print("apsconnect-cli v.{} built with love."
               .format(pkg_resources.get_distribution('apsconnectcli').version))
 
-    def install_backend(self, name, image, config_file, hostname, healthcheck_path='/',
+    def install_backend(self, name, image, config_file, hostname, healthcheck_path=None,
                         root_path='/', namespace='default', replicas=2,
                         force=False):
         """ Install connector-backend in the k8s cluster"""
+        if healthcheck_path:
+            print("WARNING --healthcheck-path is deprecated and will be dropped in future releases."
+                  " The connector should have the same value for root path and health check path.")
+        else:
+            healthcheck_path = root_path
+
         try:
             with open(config_file) as config:
                 print("Loading config file: {}".format(config_file))
