@@ -11,7 +11,7 @@ install_reqs = parse_requirements(os.path.join(os.path.dirname(os.path.abspath(_
 setup(
     name='apsconnectcli',
     author='Ingram Micro',
-    version='1.7.1',
+    version='1.7.2',
     keywords='aps apsconnect connector automation',
     extras_require={
         ':python_version<="2.7"': ['backports.tempfile==1.0rc1']},

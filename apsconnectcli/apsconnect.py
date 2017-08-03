@@ -873,23 +873,29 @@ def _polling_service_access(name, ext_v1, namespace, timeout=120):
         time.sleep(10)
 
 
-def _get_resources(tenant_schema_path, type='Counter'):
+def _get_resources(tenant_schema_path, type='Counter', _filter=None):
     resource_type = 'http://aps-standard.org/types/core/resource/1.0#{}'.format(type)
     tenant_properties = _get_properties(tenant_schema_path)
     resources = {}
+
     for key in tenant_properties:
         if tenant_properties[key]['type'] == resource_type:
             resources[key] = (tenant_properties[key])
+
+    if _filter:
+        resources = dict(filter(_filter, resources.items()))
 
     return resources
 
 
 def _get_counters(tenant_schema_path):
-    return _get_resources(tenant_schema_path, 'Counter')
+    return _get_resources(tenant_schema_path, 'Counter', lambda x: 'title' in x[1])
 
 
 def _get_parameters(tenant_schema_path):
-    return _get_resources(tenant_schema_path, 'Limit')
+    parameters = _get_resources(tenant_schema_path, 'Counter', lambda x: 'title' not in x[1])
+    parameters.update(_get_resources(tenant_schema_path, 'Limit'))
+    return parameters
 
 
 def _get_properties(schema_path):
