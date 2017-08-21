@@ -75,7 +75,7 @@ Connector backend - https://xxx
 ```
 apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
 				            --backend-url BACKEND_URL [--settings-file SETTINGS_FILE] \
-				            [--network NETWORK]
+				            [--network = public ] [--hub-id = None]
 ```
 ```
 ⇒  apsconnect install-frontend package.aps.zip application-3-v1-687fd3e99eb 639a0c2bf3ab461aaf74a5c622d1fa34 --backend-url http://127.197.49.26/
@@ -85,6 +85,7 @@ Resource types creation [ok]
 Service template "connector" created with id=16 [ok]
 ```
 
+_Note that `--network proxy` enables support of outbound proxy. [More details](https://doc.apsstandard.org/7.1/concepts/backend/connectors/proxy/#setting-external-application-instance)_
 ## Misc
 
 #### Check utility version
@@ -103,7 +104,7 @@ OAuh key: test-c77e25b1d6974a87b2ff7f58092d6007
 Secret:   14089074ca9a4abd80ba45a19baae693
 ```
 
-_Note that --source gets http(s):// or filepath argument._
+_Note that `--source` gets http(s):// or filepath argument._
 
 #### Validate the k8s cluster and grab some useful data
 ```
