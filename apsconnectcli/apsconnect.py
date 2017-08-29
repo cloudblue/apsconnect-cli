@@ -331,18 +331,31 @@ class APSConnectUtil:
                 },
             }
 
-            app_properties = _get_properties(app_schema_path)
+            # Get Unique OA id for using as HubId parameter while endpoint deploying
+            base_aps_url = _get_aps_url(**{k: _get_cfg()[k] for k in APS_CONNECT_PARAMS})
 
-            if 'hubId' in app_properties:
-                payload.update({
-                    'app': {
-                        'hubId': hub_id or str(uuid.uuid4()),
-                    }
-                })
+            url = '{}/{}'.format(
+                base_aps_url,
+                'aps/2/resources?implementing(http://parallels.com/aps/types/pa/poa/1.0)',
+            )
+
+            response = request(method='GET', url=url, headers=_get_user_token(hub, cfg['user']),
+                               verify=False)
+            response.raise_for_status()
+            data = json.loads(response.content.decode('utf-8'))
+
+            if not data:
+                raise Exception("Error: core OA resource is not found")
+
+            hub_id = data[0]['aps']['id']
+
+            payload.update({
+                'app': {
+                    'hubId': hub_id
+                }
+            })
 
             payload.update(settings_file)
-
-            base_aps_url = _get_aps_url(**{k: _get_cfg()[k] for k in APS_CONNECT_PARAMS})
 
             response = request(
                 method='POST',
