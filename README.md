@@ -75,7 +75,7 @@ Connector backend - https://xxx
 ```
 apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
 				            --backend-url BACKEND_URL [--settings-file SETTINGS_FILE] \
-				            [--network = public ] [--hub-id = None]
+				            [--network = public ]
 ```
 ```
 ⇒  apsconnect install-frontend package.aps.zip application-3-v1-687fd3e99eb 639a0c2bf3ab461aaf74a5c622d1fa34 --backend-url http://127.197.49.26/
