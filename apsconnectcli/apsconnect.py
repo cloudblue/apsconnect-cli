@@ -249,7 +249,7 @@ class APSConnectUtil:
         print("[Success]")
 
     def install_frontend(self, source, oauth_key, oauth_secret, backend_url, settings_file=None,
-                         network='public', hub_id=None):
+                         network='public'):
         """ Install connector-frontend in Odin Automation Hub, --source can be http(s):// or
         filepath"""
 
@@ -331,29 +331,37 @@ class APSConnectUtil:
                 },
             }
 
-            # Get Unique OA id for using as HubId parameter while endpoint deploying
+            # Get Unique OA id for using as hubId parameter while endpoint deploying
             base_aps_url = _get_aps_url(**{k: _get_cfg()[k] for k in APS_CONNECT_PARAMS})
 
-            url = '{}/{}'.format(
-                base_aps_url,
-                'aps/2/resources?implementing(http://parallels.com/aps/types/pa/poa/1.0)',
-            )
+            app_properties = _get_properties(app_schema_path)
 
-            response = request(method='GET', url=url, headers=_get_user_token(hub, cfg['user']),
-                               verify=False)
-            response.raise_for_status()
-            data = json.loads(response.content.decode('utf-8'))
+            if 'hubId' in app_properties:
+                url = '{}/{}'.format(
+                    base_aps_url,
+                    'aps/2/resources?implementing(http://parallels.com/aps/types/pa/poa/1.0)',
+                )
 
-            if not data:
-                raise Exception("Error: core OA resource is not found")
+                response = request(method='GET', url=url, headers=_get_user_token(hub, cfg['user']),
+                                   verify=False)
+                response.raise_for_status()
 
-            hub_id = data[0]['aps']['id']
+                try:
+                    data = json.loads(response.content.decode('utf-8'))
+                except ValueError:
+                    print("APSController provided non-json format")
+                    sys.exit(1)
 
-            payload.update({
-                'app': {
-                    'hubId': hub_id
-                }
-            })
+                if not data:
+                    raise Exception("Error: core OA resource is not found")
+
+                hub_id = data[0]['aps']['id']
+
+                payload.update({
+                    'app': {
+                        'hubId': hub_id
+                    }
+                })
 
             payload.update(settings_file)
 
