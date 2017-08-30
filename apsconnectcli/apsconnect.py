@@ -267,6 +267,7 @@ class APSConnectUtil:
             with zipfile.ZipFile(package_path, 'r') as zip_ref:
                 meta_path = zip_ref.extract('APP-META.xml', path=tdir)
                 tenant_schema_path = zip_ref.extract('schemas/tenant.schema', tdir)
+                app_schema_path = zip_ref.extract('schemas/app.schema', tdir)
 
                 try:
                     zip_ref.extract('schemas/user.schema', tdir)
