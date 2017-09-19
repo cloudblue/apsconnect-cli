@@ -52,7 +52,8 @@ Config saved [/Users/allexx/.aps_config]
 ```
 apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE --hostname HOST \
                           [--healthcheck-path HEALTHCHECK_PATH] [--root-path ROOT_PATH] \
-                          [--namespace NAMESPACE] [--replicas REPLICAS] [--force FORCE]
+                          [--namespace NAMESPACE] [--replicas REPLICAS] [--tls-secret-name TLS_SECRET_NAME] \
+                          [--force FORCE]
 ```
 
 ```
