@@ -178,7 +178,7 @@ class APSConnectUtil:
 
     def install_backend(self, name, image, config_file, hostname, healthcheck_path=None,
                         root_path='/', namespace='default', replicas=2,
-                        force=False):
+                        tls_secret_name=None, force=False):
         """ Install connector-backend in the k8s cluster"""
         if healthcheck_path:
             print("WARNING --healthcheck-path is deprecated and will be dropped in future releases."
@@ -230,7 +230,8 @@ class APSConnectUtil:
             sys.exit(1)
 
         try:
-            _create_ingress(hostname, name, core_v1, ext_v1, namespace, force)
+            _create_ingress(hostname, name, core_v1, ext_v1, namespace,
+                            tls_secret_name, force)
             print("Create ingress [ok]")
         except Exception as e:
             print("Can't create ingress in cluster, error: {}".format(e))
@@ -829,8 +830,13 @@ def _create_service(name, api, namespace='default', force=False):
     api.create_namespaced_service(namespace=namespace, body=service)
 
 
-def _create_ingress(hostname, name, api, ext_api, namespace='default', force=False):
-    tls_secret_name = '{}-tls'.format(hostname)
+def _create_ingress(hostname, name, api, ext_api, namespace='default',
+                    tls_secret_name=None, force=False):
+    generated_tls = False
+
+    if not tls_secret_name:
+        generated_tls = True
+        tls_secret_name = '{}-tls'.format(hostname)
 
     ingress = {
         'apiVersion': 'extensions/v1beta1',
@@ -865,7 +871,8 @@ def _create_ingress(hostname, name, api, ext_api, namespace='default', force=Fal
     }
 
     if force:
-        _delete_by_namespace('secret', tls_secret_name, api, namespace)
+        if generated_tls:
+            _delete_by_namespace('secret', tls_secret_name, api, namespace)
         _delete_by_namespace('ingress', name, ext_api, namespace)
 
     ext_api.create_namespaced_ingress(namespace=namespace, body=ingress, pretty=True)
