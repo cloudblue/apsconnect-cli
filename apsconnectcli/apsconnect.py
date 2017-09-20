@@ -727,10 +727,14 @@ def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
                                 },
                             ],
                             'resources': {
-                                # TODO increase limits by default
-                                'limits': {
+                                'requests': {
                                     'cpu': '100m',
                                     'memory': '128Mi',
+                                },
+                                # TODO need more limits by default?
+                                'limits': {
+                                    'cpu': '200m',
+                                    'memory': '256Mi',
                                 },
                             },
                             'volumeMounts': [
