@@ -840,11 +840,17 @@ def _create_service(name, api, namespace='default', force=False):
 
 def _create_ingress(hostname, name, api, ext_api, namespace='default',
                     tls_secret_name=None, force=False):
-    generated_tls = False
-
     if not tls_secret_name:
-        generated_tls = True
-        tls_secret_name = '{}-tls'.format(hostname)
+        try:
+            api.read_namespace('kube-lego')
+            tls_secret_name = '{}-tls'.format(hostname)
+        except ApiException as e:
+            if e.status == 404:
+                # Hostname without a subdomain part
+                _, hostname_domain = hostname.split('.', 1)
+                tls_secret_name = 'star.{}'.format(hostname_domain)
+            else:
+                raise ApiException("Kube-lego namespace cannot be checked")
 
     ingress = {
         'apiVersion': 'extensions/v1beta1',
@@ -879,8 +885,6 @@ def _create_ingress(hostname, name, api, ext_api, namespace='default',
     }
 
     if force:
-        if generated_tls:
-            _delete_by_namespace('secret', tls_secret_name, api, namespace)
         _delete_by_namespace('ingress', name, ext_api, namespace)
 
     ext_api.create_namespaced_ingress(namespace=namespace, body=ingress, pretty=True)
