@@ -846,12 +846,12 @@ def _create_ingress(hostname, name, api, ext_api, namespace='default',
         generated_tls = True
 
         try:
-            api.read_namespace('kube-leg')
+            api.read_namespace('kube-lego')
             tls_secret_name = '{}-tls'.format(hostname)
         except ApiException as e:
             if e.status == 404:
                 # Hostname without a subdomain part
-                hostname_domain = ('.').join(hostname.split('.')[1:])
+                _, hostname_domain = hostname.split('.', 1)
                 tls_secret_name = 'star.{}'.format(hostname_domain)
             else:
                 raise ApiException("Kube-lego namespace cannot be checked")
