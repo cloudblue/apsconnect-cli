@@ -250,7 +250,7 @@ class APSConnectUtil:
         print("[Success]")
 
     def install_frontend(self, source, oauth_key, oauth_secret, backend_url, settings_file=None,
-                         network='public'):
+                         network='public', hub_id=None):
         """ Install connector-frontend in Odin Automation Hub, --source can be http(s):// or
         filepath"""
 
@@ -354,13 +354,14 @@ class APSConnectUtil:
                     sys.exit(1)
 
                 if not data:
-                    raise Exception("Error: core OA resource is not found")
-
-                hub_id = data[0]['aps']['id']
+                    print("WARNING core OA resource is not found, apsconnect-cli "
+                          "using --hub-id param or generate it automatically")
+                else:
+                    hub_id = data[0]['aps']['id']
 
                 payload.update({
                     'app': {
-                        'hubId': hub_id
+                        'hubId': hub_id or str(uuid.uuid4())
                     }
                 })
 
