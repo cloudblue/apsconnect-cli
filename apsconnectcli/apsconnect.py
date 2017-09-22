@@ -353,15 +353,18 @@ class APSConnectUtil:
                     print("APSController provided non-json format")
                     sys.exit(1)
 
-                if not data:
-                    print("WARNING core OA resource is not found, apsconnect-cli "
-                          "using --hub-id param or generate it automatically")
-                else:
+                if not data and not hub_id:
+                    raise Exception("Core OA resource is not found\n"
+                                    "Use --hub-id option for set the parameter yourself "
+                                    "or `--hub-id=auto` to automatically generate this option")
+                elif data:
                     hub_id = data[0]['aps']['id']
+                elif hub_id == 'auto':
+                    hub_id = str(uuid.uuid4())
 
                 payload.update({
                     'app': {
-                        'hubId': hub_id or str(uuid.uuid4())
+                        'hubId': hub_id
                     }
                 })
 
