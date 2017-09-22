@@ -355,8 +355,8 @@ class APSConnectUtil:
 
                 if not data and not hub_id:
                     raise Exception("Core OA resource is not found\n"
-                                    "Use --hub-id option for set the parameter yourself "
-                                    "or `--hub-id=auto` to automatically generate this option")
+                                    "Use --hub-id={value} argument to specify the ID "
+                                    "manually or --hub-id=auto to generate it automatically")
                 elif data:
                     hub_id = data[0]['aps']['id']
                 elif hub_id == 'auto':
