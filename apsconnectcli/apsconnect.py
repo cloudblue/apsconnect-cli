@@ -840,11 +840,7 @@ def _create_service(name, api, namespace='default', force=False):
 
 def _create_ingress(hostname, name, api, ext_api, namespace='default',
                     tls_secret_name=None, force=False):
-    generated_tls = False
-
     if not tls_secret_name:
-        generated_tls = True
-
         try:
             api.read_namespace('kube-lego')
             tls_secret_name = '{}-tls'.format(hostname)
