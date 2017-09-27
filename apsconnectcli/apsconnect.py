@@ -158,8 +158,12 @@ class APSConnectUtil:
 
         _cluster_probe_connection(api, api_client)
 
-        lbs = core_v1.list_service_for_all_namespaces(label_selector='app=nginx-ingress,'
-                                                                     'component=controller')
+        """ First try to pull ingress from namespace then global """
+        if namespace:
+            lbs = core_v1.list_namespaced_service(namepsace, label_selector='app=nginx-ingress,component=controller')
+        else:
+            lbs = core_v1.list_service_for_all_namespaces(label_selector='app=nginx-ingress,component=controller')
+
         if not lbs:
             print("Unable to find suitable nginx ingress service."
                   "Details https://github.com/jetstack/kube-lego/tree/master/examples/nginx")
