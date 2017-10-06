@@ -9,6 +9,7 @@ import uuid
 import base64
 import warnings
 import zipfile
+import pkg_resources
 from future.moves.urllib.parse import urlparse
 from shutil import copyfile
 from xml.etree import ElementTree as xml_et
@@ -170,11 +171,6 @@ class APSConnectUtil:
             print("Service {} IP {}"
                   .format(lb.metadata._name, lb.status.load_balancer.ingress[0].ip))
         sys.exit(0)
-
-    def version(self):
-        import pkg_resources
-        print("apsconnect-cli v.{} built with love."
-              .format(pkg_resources.get_distribution('apsconnectcli').version))
 
     def install_backend(self, name, image, config_file, hostname, healthcheck_path=None,
                         root_path='/', namespace='default', replicas=2,
@@ -1005,6 +1001,12 @@ def _get_hub_info():
 
 
 def main():
+    try:
+        print("APSConnect-cli v.{}"
+            .format(pkg_resources.get_distribution('apsconnectcli').version))
+    except pkg_resources.DistributionNotFound:
+        pass
+
     try:
         fire.Fire(APSConnectUtil, name='apsconnect')
     except Exception as e:
