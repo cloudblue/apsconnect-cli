@@ -22,6 +22,8 @@ from requests import request, get
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
+from apsconnectcli.action_logger import Logger
+
 if sys.version_info >= (3,):
     import tempfile
     import xmlrpc.client as xmlrpclib
@@ -30,6 +32,19 @@ else:
     import xmlrpclib
     import tempfile
     from backports.tempfile import TemporaryDirectory
+
+
+home = os.path.expanduser("~")
+
+log_dir = os.path.join(home, ".apsconnect")
+
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+log_file = os.path.join(log_dir, "apsconnect.log")
+
+sys.stdout = Logger(log_file, sys.stdout)
+sys.stderr = Logger(log_file, sys.stderr)
 
 warnings.filterwarnings('ignore')
 
@@ -1006,6 +1021,8 @@ def _get_hub_info():
 
 def main():
     try:
+        log_entry = ("=============================\n{}\n".format(" ".join(sys.argv)))
+        Logger(log_file).log(log_entry)
         fire.Fire(APSConnectUtil, name='apsconnect')
     except Exception as e:
         print("Error: {}".format(e))
