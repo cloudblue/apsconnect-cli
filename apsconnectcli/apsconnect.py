@@ -9,6 +9,7 @@ import uuid
 import base64
 import warnings
 import zipfile
+import pkg_resources
 from future.moves.urllib.parse import urlparse
 from shutil import copyfile
 from xml.etree import ElementTree as xml_et
@@ -185,7 +186,6 @@ class APSConnectUtil:
         sys.exit(0)
 
     def version(self):
-        import pkg_resources
         print("apsconnect-cli v.{} built with love."
               .format(pkg_resources.get_distribution('apsconnectcli').version))
 
@@ -1018,6 +1018,12 @@ def _get_hub_info():
 
 
 def main():
+    try:
+        print("APSConnect-cli v.{}".format(
+            pkg_resources.get_distribution('apsconnectcli').version))
+    except pkg_resources.DistributionNotFound:
+        pass
+
     try:
         log_entry = ("=============================\n{}\n".format(" ".join(sys.argv)))
         Logger(LOG_FILE).log(log_entry)
