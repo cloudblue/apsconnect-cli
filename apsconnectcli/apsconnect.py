@@ -34,21 +34,19 @@ else:
     from backports.tempfile import TemporaryDirectory
 
 
-home = os.path.expanduser("~")
+LOG_DIR = os.path.expanduser('~/.apsconnect')
 
-log_dir = os.path.join(home, ".apsconnect")
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
 
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
+LOG_FILE = os.path.join(LOG_DIR, "apsconnect.log")
 
-log_file = os.path.join(log_dir, "apsconnect.log")
-
-sys.stdout = Logger(log_file, sys.stdout)
-sys.stderr = Logger(log_file, sys.stderr)
+sys.stdout = Logger(LOG_FILE, sys.stdout)
+sys.stderr = Logger(LOG_FILE, sys.stderr)
 
 warnings.filterwarnings('ignore')
 
-CFG_FILE_PATH = os.path.expanduser('~/.aps_config')
+CFG_FILE_PATH = os.path.expanduser('~/.apsconnect/.aps_config')
 KUBE_DIR_PATH = os.path.expanduser('~/.kube')
 KUBE_FILE_PATH = '{}/config'.format(KUBE_DIR_PATH)
 RPC_CONNECT_PARAMS = ('host', 'user', 'password', 'ssl', 'port')
@@ -1022,7 +1020,7 @@ def _get_hub_info():
 def main():
     try:
         log_entry = ("=============================\n{}\n".format(" ".join(sys.argv)))
-        Logger(log_file).log(log_entry)
+        Logger(LOG_FILE).log(log_entry)
         fire.Fire(APSConnectUtil, name='apsconnect')
     except Exception as e:
         print("Error: {}".format(e))
