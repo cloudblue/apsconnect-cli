@@ -27,6 +27,7 @@ apsconnect init-cluster --cluster-endpoint CLUSTER_ENDPOINT \
 
 ```
 ⇒  apsconnect init-cluster k8s.cluster.host k8s-admin password ./my-k8s-cert.pem
+APSConnect-cli v.1.7.11
 Connectivity with k8s cluster api [ok]
 k8s cluster version - v1.5.6
 Config saved [/Users/allexx/.kube/config]
@@ -41,8 +42,9 @@ apsconnect init-hub --hub-host HUB_HOST [--user USER] [--pwd PWD] \
 ```
 ```
 ⇒  apsconnect init-hub oa-hub-hostname
+APSConnect-cli v.1.7.11
 Connectivity with hub RPC API [ok]
-Hub version oa-7.1-2188
+Hub version oa-7.1-3256
 Connectivity with hub APS API [ok]
 Config saved [/Users/allexx/.aps_config]
 ```
@@ -50,14 +52,17 @@ Config saved [/Users/allexx/.aps_config]
 #### 3. Install connector-backend in the k8s cluster
 
 ```
-apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE --hostname HOST \
+apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE --hostname HOSTNAME \
                           [--healthcheck-path HEALTHCHECK_PATH] [--root-path ROOT_PATH] \
                           [--namespace NAMESPACE] [--replicas REPLICAS] [--tls-secret-name TLS_SECRET_NAME] \
                           [--force FORCE]
 ```
+Hostname is address to access your connector.
+Tls-secret-name is name of your certificate in Ingress.
 
 ```
 ⇒  apsconnect install-backend connector_name image hostname config_file
+APSConnect-cli v.1.7.11
 Loading config file: /Users/allexx/config_file
 Connect https://xxx [ok]
 Create config [ok]
@@ -80,6 +85,7 @@ apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret
 ```
 ```
 ⇒  apsconnect install-frontend package.aps.zip application-3-v1-687fd3e99eb 639a0c2bf3ab461aaf74a5c622d1fa34 --backend-url http://127.197.49.26/
+APSConnect-cli v.1.7.11
 Importing connector http://aps.odin.com/app/connector
 Connector http://aps.odin.com/app/connector imported with id=206 [ok]
 Resource types creation [ok]
@@ -92,7 +98,7 @@ _Note that `--network proxy` enables support of outbound proxy. [More details](h
 #### Check utility version
 ```
 ⇒ apsconnect version
-apsconnect-cli v.1.6.11 built with love.
+apsconnect-cli v.1.7.11 built with love.
 ```
 
 #### Generate Oauth credentials with helper command
