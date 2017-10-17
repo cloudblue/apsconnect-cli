@@ -60,8 +60,7 @@ apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE -
 `Hostname` is an address to access your connector.
 
 `Tls-secret-name` is a name of your certificate in Ingress in case you already have it for the specified hostname.
-
-Otherwise, you can install kube-lego in order to automatically request and renew certificates.
+Otherwise, you can install [kube-lego](https://github.com/jetstack/kube-lego) in order to automatically request and renew certificates.
 
 ```
 ⇒  apsconnect install-backend connector_name image hostname config_file
