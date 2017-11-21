@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import json
 import os
+import re
 import sys
 import time
 import copy
@@ -598,8 +599,16 @@ def _get_hub_version(hub):
 
 
 def _assert_hub_version(hub_version):
-    if not hub_version.startswith('oa-7.1-'):
-        print("Hub 7.1 version needed, got {}".format(hub_version))
+    supported_version = False
+
+    match = re.match(r'^oa-(?P<major>\d)\.(?P<minor>\d)-', hub_version)
+    if match:
+        major = int(match.groupdict()['major'])
+        minor = int(match.groupdict()['minor'])
+        supported_version = (major == 7 and minor > 0) or major > 7
+
+    if not supported_version:
+        print("Hub 7.1 version or above needed, got {}".format(hub_version))
         sys.exit(1)
 
 
