@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import json
 import os
+import re
 import sys
 import time
 import copy
@@ -9,6 +10,7 @@ import uuid
 import base64
 import warnings
 import zipfile
+import pkg_resources
 from future.moves.urllib.parse import urlparse
 from shutil import copyfile
 from xml.etree import ElementTree as xml_et
@@ -23,6 +25,8 @@ from requests import request, get
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
+from apsconnectcli.action_logger import Logger
+
 if sys.version_info >= (3,):
     import tempfile
     import xmlrpc.client as xmlrpclib
@@ -32,9 +36,20 @@ else:
     import tempfile
     from backports.tempfile import TemporaryDirectory
 
+
+LOG_DIR = os.path.expanduser('~/.apsconnect')
+
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+LOG_FILE = os.path.join(LOG_DIR, "apsconnect.log")
+
+sys.stdout = Logger(LOG_FILE, sys.stdout)
+sys.stderr = Logger(LOG_FILE, sys.stderr)
+
 warnings.filterwarnings('ignore')
 
-CFG_FILE_PATH = os.path.expanduser('~/.aps_config')
+CFG_FILE_PATH = os.path.expanduser('~/.apsconnect/.aps_config')
 KUBE_DIR_PATH = os.path.expanduser('~/.kube')
 KUBE_FILE_PATH = '{}/config'.format(KUBE_DIR_PATH)
 RPC_CONNECT_PARAMS = ('host', 'user', 'password', 'ssl', 'port')
@@ -73,6 +88,7 @@ AUTH_TEMPLATE = {
         },
     ],
 }
+NULL_CFG_INFO = (None, None)
 
 
 class APSConnectUtil:
@@ -155,16 +171,51 @@ class APSConnectUtil:
                                  indent=4))
             print("Config saved [{}]".format(CFG_FILE_PATH))
 
-    def install_backend(self, name, image, config_file, healthcheck_path='/',
+    def check_backend(self):
+        """ Validate k8s components and get useful information"""
+        api_client = _get_k8s_api_client()
+        api = client.VersionApi(api_client)
+        core_v1 = client.CoreV1Api(api_client)
+
+        _cluster_probe_connection(api, api_client)
+
+        lbs = core_v1.list_service_for_all_namespaces(label_selector='app=nginx-ingress,'
+                                                                     'component=controller')
+        if not lbs:
+            print("Unable to find suitable nginx ingress service."
+                  "Details https://github.com/jetstack/kube-lego/tree/master/examples/nginx")
+            sys.exit(1)
+        if len(lbs.items) > 1:
+            print("WARN: Found more than one suitable nginx ingress services.")
+        for lb in lbs.items:
+            print("Service {} IP {}"
+                  .format(lb.metadata._name, lb.status.load_balancer.ingress[0].ip))
+        sys.exit(0)
+
+    def version(self):
+        print("apsconnect-cli v.{} built with love."
+              .format(pkg_resources.get_distribution('apsconnectcli').version))
+
+    def install_backend(self, name, image, config_file, hostname, healthcheck_path=None,
                         root_path='/', namespace='default', replicas=2,
-                        force=False):
+                        tls_secret_name=None, force=False):
         """ Install connector-backend in the k8s cluster"""
+        if healthcheck_path:
+            print("WARNING --healthcheck-path is deprecated and will be dropped in future releases."
+                  " The connector should have the same value for root path and health check path.")
+        else:
+            healthcheck_path = root_path
 
         try:
-            config_data = yaml.load(open(config_file))
-            print("Loading config file: {}".format(config_file))
+            with open(config_file) as config:
+                print("Loading config file: {}".format(config_file))
+                config_data, config_format = json.load(config), 'json'
+        except ValueError:
+            with open(config_file, 'r') as config:
+                config_data, config_format = yaml.load(config), 'yaml'
         except yaml.YAMLError as e:
-            print('Config file should be valid JSON or YAML, error: {}'.format(e))
+            print("Config file should be valid JSON or YAML structure, error: {}".format(e))
+            sys.exit(1)
         except Exception as e:
             print("Unable to read config file, error: {}".format(e))
             sys.exit(1)
@@ -174,15 +225,10 @@ class APSConnectUtil:
         core_v1 = client.CoreV1Api(api_client)
         ext_v1 = client.ExtensionsV1beta1Api(api_client)
 
-        try:
-            api.get_code()
-            print("Connected to cluster - {}".format(api_client.host))
-        except Exception as e:
-            print("Unable to communicate with k8s cluster, error: {}".format(e))
-            sys.exit(1)
+        _cluster_probe_connection(api, api_client)
 
         try:
-            _create_secret(name, config_data, core_v1, namespace, force)
+            _create_secret(name, config_format, config_data, core_v1, namespace, force)
             print("Create config [ok]")
         except Exception as e:
             print("Can't create config in cluster, error: {}".format(e))
@@ -200,15 +246,23 @@ class APSConnectUtil:
             _create_service(name, core_v1, namespace, force)
             print("Create service [ok]")
         except Exception as e:
-            print("Can't create deployment in cluster, error: {}".format(e))
+            print("Can't create service in cluster, error: {}".format(e))
+            sys.exit(1)
+
+        try:
+            _create_ingress(hostname, name, core_v1, ext_v1, namespace,
+                            tls_secret_name, force)
+            print("Create ingress [ok]")
+        except Exception as e:
+            print("Can't create ingress in cluster, error: {}".format(e))
             sys.exit(1)
 
         print("Checking service availability")
 
         try:
-            ip = _polling_service_access(name, core_v1, namespace, timeout=180)
+            _polling_service_access(name, ext_v1, namespace, timeout=180)
             print("Expose service [ok]")
-            print("Connector backend - http://{}/{}".format(ip, root_path.lstrip('/')))
+            print("Connector backend - https://{}/{}".format(hostname, root_path.lstrip('/')))
         except Exception as e:
             print("Service expose FAILED, error: {}".format(e))
             sys.exit(1)
@@ -235,6 +289,12 @@ class APSConnectUtil:
                 meta_path = zip_ref.extract('APP-META.xml', path=tdir)
                 tenant_schema_path = zip_ref.extract('schemas/tenant.schema', tdir)
                 app_schema_path = zip_ref.extract('schemas/app.schema', tdir)
+
+                try:
+                    zip_ref.extract('schemas/user.schema', tdir)
+                    user_service = True
+                except KeyError:
+                    user_service = False
 
             tree = xml_et.ElementTree(file=meta_path)
             namespace = '{http://aps-standard.org/ns/2}'
@@ -292,18 +352,43 @@ class APSConnectUtil:
                 },
             }
 
+            # Get Unique OA id for using as hubId parameter while endpoint deploying
+            base_aps_url = _get_aps_url(**{k: _get_cfg()[k] for k in APS_CONNECT_PARAMS})
+
             app_properties = _get_properties(app_schema_path)
 
-            if 'hubID' in app_properties:
+            if 'hubId' in app_properties:
+                url = '{}/{}'.format(
+                    base_aps_url,
+                    'aps/2/resources?implementing(http://parallels.com/aps/types/pa/poa/1.0)',
+                )
+
+                response = request(method='GET', url=url, headers=_get_user_token(hub, cfg['user']),
+                                   verify=False)
+                response.raise_for_status()
+
+                try:
+                    data = json.loads(response.content.decode('utf-8'))
+                except ValueError:
+                    print("APSController provided non-json format")
+                    sys.exit(1)
+
+                if not data and not hub_id:
+                    raise Exception("Core OA resource is not found\n"
+                                    "Use --hub-id={value} argument to specify the ID "
+                                    "manually or --hub-id=auto to generate it automatically")
+                elif data:
+                    hub_id = data[0]['aps']['id']
+                elif hub_id == 'auto':
+                    hub_id = str(uuid.uuid4())
+
                 payload.update({
                     'app': {
-                        'hubID': hub_id or str(uuid.uuid4()),
+                        'hubId': hub_id
                     }
                 })
 
             payload.update(settings_file)
-
-            base_aps_url = _get_aps_url(**{k: _get_cfg()[k] for k in APS_CONNECT_PARAMS})
 
             response = request(
                 method='POST',
@@ -372,29 +457,30 @@ class APSConnectUtil:
             for id in list(resource_types_ids):
                 limited_resources[id] = 1
 
-            user_resource_type_payload = {
-                'resclass_name': 'rc.saas.service',
-                'name': '{} users'.format(connector_name),
-                'act_params': [
-                    {
-                        'var_name': 'app_id',
-                        'var_value': application_id
-                    },
-                    {
-                        'var_name': 'service_id',
-                        'var_value': 'user'
-                    },
-                    {
-                        'var_name': 'autoprovide_service',
-                        'var_value': '0'
-                    },
-                ]
-            }
+            if user_service:
+                user_resource_type_payload = {
+                    'resclass_name': 'rc.saas.service',
+                    'name': '{} users'.format(connector_name),
+                    'act_params': [
+                        {
+                            'var_name': 'app_id',
+                            'var_value': application_id
+                        },
+                        {
+                            'var_name': 'service_id',
+                            'var_value': 'user'
+                        },
+                        {
+                            'var_name': 'autoprovide_service',
+                            'var_value': '0'
+                        },
+                    ]
+                }
 
-            response = hub.addResourceType(**user_resource_type_payload)
-            _osaapi_raise_for_status(response)
+                response = hub.addResourceType(**user_resource_type_payload)
+                _osaapi_raise_for_status(response)
 
-            resource_types_ids.append(response['result']['resource_type_id'])
+                resource_types_ids.append(response['result']['resource_type_id'])
 
             # Create counters resource types
             counters = _get_counters(tenant_schema_path)
@@ -425,7 +511,6 @@ class APSConnectUtil:
 
             # Create parameters resource types
             parameters = _get_parameters(tenant_schema_path)
-            parameters_ids = []
 
             for parameter in parameters:
                 payload = {
@@ -452,7 +537,6 @@ class APSConnectUtil:
 
                 resource_types_ids.append(response['result']['resource_type_id'])
                 limited_resources[response['result']['resource_type_id']] = 0
-
 
             print("Resource types creation [ok]")
 
@@ -498,6 +582,16 @@ class APSConnectUtil:
         _osaapi_raise_for_status(r)
         print("APS Development mode {}.".format('DISABLED' if disable else 'ENABLED'))
 
+    def info(self):
+        """ Show current state of apsconnect-cli binding with Kubernetes cluster and OA Hub"""
+
+        kube_check = ("Kube cluster:", lambda: os.path.exists(KUBE_FILE_PATH), _get_cluster_info)
+        oa_hub_check = ("OA Hub:", lambda: os.path.exists(CFG_FILE_PATH), _get_hub_info)
+
+        for (item_name, check_config, get_info) in [oa_hub_check, kube_check]:
+            print(item_name)
+            print(_check_binding(check_config, get_info))
+
 
 def _get_aps_url(aps_host, aps_port, use_tls_aps):
     return '{}://{}:{}'.format('https' if use_tls_aps else 'http', aps_host, aps_port)
@@ -511,8 +605,16 @@ def _get_hub_version(hub):
 
 
 def _assert_hub_version(hub_version):
-    if not hub_version.startswith('oa-7.1-'):
-        print("Hub 7.1 version needed, got {}".format(hub_version))
+    supported_version = False
+
+    match = re.match(r'^oa-(?P<major>\d)\.(?P<minor>\d)-', hub_version)
+    if match:
+        major = int(match.groupdict()['major'])
+        minor = int(match.groupdict()['minor'])
+        supported_version = (major == 7 and minor > 0) or major > 7
+
+    if not supported_version:
+        print("Hub 7.1 version or above needed, got {}".format(hub_version))
         sys.exit(1)
 
 
@@ -562,11 +664,26 @@ def _get_cfg():
     return cfg
 
 
-def _create_secret(name, data, api, namespace='default', force=False):
+def _cluster_probe_connection(api, api_client):
+    try:
+        api.get_code()
+        print("Connect {} [ok]".format(api_client.host))
+    except Exception as e:
+        print("Unable to communicate with the k8s cluster, error: {}".format(e))
+        sys.exit(1)
+
+
+def _create_secret(name, data_format, data, api, namespace='default', force=False):
+    if data_format == 'json':
+        config = json.dumps(data, ensure_ascii=False).encode('utf-8')
+    elif data_format == 'yaml':
+        config = yaml.dump(data, allow_unicode=True, default_flow_style=False)
+    else:
+        raise Exception("Unknown config data format: {}".format(data_format))
     secret = {
         'apiVersion': 'v1',
         'data': {
-            'config': base64.b64encode(json.dumps(data).encode('utf-8')).decode(),
+            'config': base64.b64encode(bytes(config, 'utf-8')).decode(),
         },
         'kind': 'Secret',
         'metadata': {
@@ -642,10 +759,14 @@ def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
                                 },
                             ],
                             'resources': {
-                                # TODO increase limits by default
-                                'limits': {
+                                'requests': {
                                     'cpu': '100m',
                                     'memory': '128Mi',
+                                },
+                                # TODO need more limits by default?
+                                'limits': {
+                                    'cpu': '200m',
+                                    'memory': '256Mi',
                                 },
                             },
                             'volumeMounts': [
@@ -735,30 +856,85 @@ def _create_service(name, api, namespace='default', force=False):
             'selector': {
                 'name': name
             },
-            'type': 'LoadBalancer'
+            'type': 'ClusterIP'
         }
     }
 
     if force:
-        _delete_service(name, api, namespace)
+        _delete_by_namespace('service', name, api, namespace)
 
     api.create_namespaced_service(namespace=namespace, body=service)
 
 
-def _delete_service(name, api, namespace):
+def _create_ingress(hostname, name, api, ext_api, namespace='default',
+                    tls_secret_name=None, force=False):
+    if not tls_secret_name:
+        try:
+            api.read_namespace('kube-lego')
+            tls_secret_name = '{}-tls'.format(hostname)
+        except ApiException as e:
+            if e.status == 404:
+                # Hostname without a subdomain part
+                _, hostname_domain = hostname.split('.', 1)
+                tls_secret_name = 'star.{}'.format(hostname_domain)
+            else:
+                raise ApiException("Kube-lego namespace cannot be checked")
+
+    ingress = {
+        'apiVersion': 'extensions/v1beta1',
+        'kind': 'Ingress',
+        'metadata': {
+            'annotations': {
+                'kubernetes.io/tls-acme': 'true',
+                'kubernetes.io/ingress.class': 'nginx'},
+            'name': name,
+            'namespace': namespace
+        },
+        'spec': {
+            'tls': [
+                {'hosts': [hostname, ],
+                 'secretName': tls_secret_name}],
+            'rules': [
+                {
+                    'host': hostname,
+                    'http': {
+                        'paths': [
+                            {'path': '/',
+                             'backend': {
+                                 'servicePort': 80,
+                                 'serviceName': name
+                             }
+                             }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+
+    if force:
+        _delete_by_namespace('ingress', name, ext_api, namespace)
+
+    ext_api.create_namespaced_ingress(namespace=namespace, body=ingress, pretty=True)
+
+
+def _delete_by_namespace(kind, name, api, namespace):
+    kwargs = {'namespace': namespace, 'name': name}
+    if kind in ('secret', 'ingress'):
+        kwargs.update({'body': client.V1DeleteOptions()})
     try:
-        api.delete_namespaced_service(namespace=namespace, name=name)
+        getattr(api, 'delete_namespaced_{}'.format(kind))(**kwargs)
     except ApiException as e:
         if e.status != 404:
             raise
 
 
-def _polling_service_access(name, api, namespace, timeout=120):
+def _polling_service_access(name, ext_v1, namespace, timeout=120):
     max_time = datetime.now() + timedelta(seconds=timeout)
 
     while True:
         try:
-            data = api.read_namespaced_service_status(name=name, namespace=namespace)
+            data = ext_v1.read_namespaced_ingress_status(name=name, namespace=namespace)
             ingress = data.status.load_balancer.ingress
 
             if ingress:
@@ -775,21 +951,31 @@ def _polling_service_access(name, api, namespace, timeout=120):
 
         time.sleep(10)
 
-def _get_resources(tenant_schema_path, type='Counter'):
+
+def _get_resources(tenant_schema_path, type='Counter', _filter=None):
     resource_type = 'http://aps-standard.org/types/core/resource/1.0#{}'.format(type)
     tenant_properties = _get_properties(tenant_schema_path)
     resources = {}
+
     for key in tenant_properties:
         if tenant_properties[key]['type'] == resource_type:
             resources[key] = (tenant_properties[key])
 
+    if _filter:
+        resources = dict(filter(_filter, resources.items()))
+
     return resources
 
+
 def _get_counters(tenant_schema_path):
-    return _get_resources(tenant_schema_path, 'Counter')
+    return _get_resources(tenant_schema_path, 'Counter', lambda x: 'title' in x[1])
+
 
 def _get_parameters(tenant_schema_path):
-    return _get_resources(tenant_schema_path, 'Limit')
+    parameters = _get_resources(tenant_schema_path, 'Counter', lambda x: 'title' not in x[1])
+    parameters.update(_get_resources(tenant_schema_path, 'Limit'))
+    return parameters
+
 
 def _get_properties(schema_path):
     with open(schema_path) as file:
@@ -816,8 +1002,60 @@ def _confirm(prompt):
     return answer
 
 
+def _check_binding(check_config, get_config_info):
+    state_not_initiated = "\tNot initiated"
+    state_is_ready = "\thost: {}\n\tuser: {}"
+    state_config_corrupted = "\tConfig file is corrupted: {}"
+
+    if not check_config():
+        return state_not_initiated
+
+    try:
+        info = get_config_info()
+    except Exception as e:
+        return state_config_corrupted.format(e)
+
+    if info == NULL_CFG_INFO:
+        return state_config_corrupted.format("binding attributes are not assigned")
+    else:
+        host, user = info
+        return state_is_ready.format(host, user)
+
+
+def _get_cluster_info():
+    with open(KUBE_FILE_PATH, 'r') as f:
+        kube_cfg = yaml.load(f.read())
+
+    if not isinstance(kube_cfg, dict):
+        return NULL_CFG_INFO
+
+    user = kube_cfg['users'][0]['user']['username']
+    host = kube_cfg['clusters'][0]['cluster']['server']
+    return (host, user)
+
+
+def _get_hub_info():
+    if not os.path.exists(CFG_FILE_PATH):
+        return NULL_CFG_INFO
+
+    with open(CFG_FILE_PATH) as f:
+        hub_cfg = json.load(f)
+
+    host = "{}:{}".format(hub_cfg['host'], hub_cfg['port'])
+    user = hub_cfg['user']
+    return (host, user)
+
+
 def main():
     try:
+        print("APSConnect-cli v.{}".format(
+            pkg_resources.get_distribution('apsconnectcli').version))
+    except pkg_resources.DistributionNotFound:
+        pass
+
+    try:
+        log_entry = ("=============================\n{}\n".format(" ".join(sys.argv)))
+        Logger(LOG_FILE).log(log_entry)
         fire.Fire(APSConnectUtil, name='apsconnect')
     except Exception as e:
         print("Error: {}".format(e))
