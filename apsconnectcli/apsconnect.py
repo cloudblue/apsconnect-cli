@@ -181,8 +181,8 @@ class APSConnectUtil:
 
         lbs = core_v1.list_service_for_all_namespaces(label_selector='app=nginx-ingress,'
                                                                      'component=controller')
-        if not lbs:
-            print("Unable to find suitable nginx ingress service."
+        if not lbs or not lbs.items:
+            print("Unable to find suitable nginx ingress service. "
                   "Details https://github.com/jetstack/kube-lego/tree/master/examples/nginx")
             sys.exit(1)
         if len(lbs.items) > 1:
