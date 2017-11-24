@@ -4,3 +4,4 @@ osaapi==0.3.12
 requests==2.13.0
 PyYAML==3.12
 kubernetes==1.0.0
+six==1.11.0

@@ -16,6 +16,7 @@ from shutil import copyfile
 from xml.etree import ElementTree as xml_et
 from datetime import datetime, timedelta
 from distutils.util import strtobool
+from six.moves import input
 
 import fire
 import yaml
@@ -992,7 +993,7 @@ def _confirm(prompt):
     answer = False
     while True:
         try:
-            answer = strtobool(raw_input(prompt))
+            answer = strtobool(input(prompt))
         except ValueError:
             continue
         except EOFError:
