@@ -13,6 +13,7 @@ from future.moves.urllib.parse import urlparse
 from shutil import copyfile
 from xml.etree import ElementTree as xml_et
 from datetime import datetime, timedelta
+from distutils.util import strtobool
 
 import fire
 import yaml
@@ -115,6 +116,11 @@ class APSConnectUtil:
         if not os.path.exists(KUBE_DIR_PATH):
             os.mkdir(KUBE_DIR_PATH)
             print("Created directory [{}]".format(KUBE_DIR_PATH))
+
+        if os.path.isfile(KUBE_FILE_PATH):
+            if not _confirm("Kubernetes config file already exists. Overwrite? "):
+                print("k8s configuration update was declined.")
+                return
 
         with open(KUBE_FILE_PATH, 'w+') as fd:
             yaml.safe_dump(auth_template, fd)
@@ -794,6 +800,20 @@ def _get_properties(schema_path):
             sys.exit(1)
 
         return properties
+
+
+def _confirm(prompt):
+    answer = False
+    while True:
+        try:
+            answer = strtobool(raw_input(prompt))
+        except ValueError:
+            continue
+        except EOFError:
+            sys.exit(1)
+        else:
+            break
+    return answer
 
 
 def main():
