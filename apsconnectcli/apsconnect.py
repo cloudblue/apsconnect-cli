@@ -15,6 +15,8 @@ from future.moves.urllib.parse import urlparse
 from shutil import copyfile
 from xml.etree import ElementTree as xml_et
 from datetime import datetime, timedelta
+from distutils.util import strtobool
+from six.moves import input
 
 import fire
 import yaml
@@ -133,6 +135,11 @@ class APSConnectUtil:
             os.mkdir(KUBE_DIR_PATH)
             print("Created directory [{}]".format(KUBE_DIR_PATH))
 
+        if os.path.isfile(KUBE_FILE_PATH):
+            if not _confirm("Kubernetes configuration file already exists. Overwrite? "):
+                print("{} configuration update was declined.".format(KUBE_FILE_PATH))
+                return
+
         with open(KUBE_FILE_PATH, 'w+') as fd:
             yaml.safe_dump(auth_template, fd)
             print("Config saved [{}]".format(KUBE_FILE_PATH))
@@ -176,8 +183,8 @@ class APSConnectUtil:
 
         lbs = core_v1.list_service_for_all_namespaces(label_selector='app=nginx-ingress,'
                                                                      'component=controller')
-        if not lbs:
-            print("Unable to find suitable nginx ingress service."
+        if not lbs or not lbs.items:
+            print("Unable to find suitable nginx ingress service. "
                   "Details https://github.com/jetstack/kube-lego/tree/master/examples/nginx")
             sys.exit(1)
         if len(lbs.items) > 1:
@@ -963,7 +970,7 @@ def _check_connector_backend_access(url, timeout=120):
 
     while True:
         try:
-            response = get(url=url, verify=False, timeout=10)
+            response = get(url=url, timeout=10)
 
             if response.status_code == 200:
                 print()
@@ -1024,6 +1031,20 @@ def _get_properties(schema_path):
             sys.exit(1)
 
         return properties
+
+
+def _confirm(prompt):
+    answer = False
+    while True:
+        try:
+            answer = strtobool(input(prompt))
+        except ValueError:
+            continue
+        except EOFError:
+            sys.exit(1)
+        else:
+            break
+    return answer
 
 
 def _check_binding(check_config, get_config_info):
