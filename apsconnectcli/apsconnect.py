@@ -970,7 +970,7 @@ def _check_connector_backend_access(url, timeout=120):
 
     while True:
         try:
-            response = get(url=url, verify=False, timeout=10)
+            response = get(url=url, timeout=10)
 
             if response.status_code == 200:
                 print()
