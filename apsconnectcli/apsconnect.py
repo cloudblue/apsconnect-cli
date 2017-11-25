@@ -20,6 +20,7 @@ import fire
 import yaml
 import osaapi
 from requests import request, get
+from requests.exceptions import Timeout, ConnectionError, SSLError
 
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
@@ -256,9 +257,20 @@ class APSConnectUtil:
         try:
             _polling_service_access(name, ext_v1, namespace, timeout=180)
             print("Expose service [ok]")
-            print("Connector backend - https://{}/{}".format(hostname, root_path.lstrip('/')))
         except Exception as e:
             print("Service expose FAILED, error: {}".format(e))
+            sys.exit(1)
+
+        print("Checking connector backend availability")
+
+        try:
+            service_url = 'https://{}/{}'.format(hostname, root_path.lstrip('/'))
+            _check_connector_backend_access(service_url)
+            print("Check connector backend host [ok]")
+            print("Connector backend - {}".format(service_url))
+        except Exception as e:
+            print()
+            print("Check connector backend host error: {}".format(e))
             sys.exit(1)
 
         print("[Success]")
@@ -944,6 +956,38 @@ def _polling_service_access(name, ext_v1, namespace, timeout=120):
             raise Exception("Waiting time exceeded")
 
         time.sleep(10)
+
+
+def _check_connector_backend_access(url, timeout=120):
+    max_time = datetime.now() + timedelta(seconds=timeout)
+
+    while True:
+        try:
+            response = get(url=url, verify=False, timeout=10)
+
+            if response.status_code == 200:
+                print()
+                return
+
+            sys.stdout.write('.')
+            sys.stdout.flush()
+        except SSLError:
+            raise_by_max_time("An SSL error occurred", max_time)
+        except Timeout:
+            raise_by_max_time("Timeout connecting to Connector Backend", max_time)
+        except ConnectionError:
+            raise_by_max_time("Connection error to Connector Backend", max_time)
+        except Exception as e:
+            raise_by_max_time(str(e), max_time)
+
+        raise_by_max_time("Waiting time exceeded", max_time)
+
+        time.sleep(10)
+
+
+def raise_by_max_time(msg, max_time):
+    if datetime.now() >= max_time:
+        raise Exception(msg)
 
 
 def _get_resources(tenant_schema_path, type='Counter', _filter=None):

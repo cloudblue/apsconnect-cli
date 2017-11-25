@@ -14,3 +14,6 @@ class Logger(object):
 
     def flush(self):
         self.log_file.flush()
+
+        if self.terminal:
+            self.terminal.flush()
