@@ -980,8 +980,7 @@ def _check_connector_backend_access(url, timeout=120):
         except Exception as e:
             raise_by_max_time(str(e), max_time)
 
-        if datetime.now() > max_time:
-            raise Exception("Waiting time exceeded")
+        raise_by_max_time("Waiting time exceeded", max_time)
 
         time.sleep(10)
 
