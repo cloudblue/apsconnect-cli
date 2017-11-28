@@ -677,6 +677,13 @@ def _get_cfg():
     return cfg
 
 
+def _to_bytes(raw_str):
+    if sys.version_info >= (3,):
+        return bytes(raw_str, 'utf-8')
+    else:
+        return bytearray(raw_str, 'utf-8')
+
+
 def _cluster_probe_connection(api, api_client):
     try:
         api.get_code()
@@ -696,7 +703,7 @@ def _create_secret(name, data_format, data, api, namespace='default', force=Fals
     secret = {
         'apiVersion': 'v1',
         'data': {
-            'config': base64.b64encode(bytes(config, 'utf-8')).decode(),
+            'config': base64.b64encode(_to_bytes(config)).decode(),
         },
         'kind': 'Secret',
         'metadata': {
@@ -976,8 +983,7 @@ def _check_connector_backend_access(url, timeout=120):
                 print()
                 return
 
-            sys.stdout.write('.')
-            sys.stdout.flush()
+            raise_by_max_time("Waiting time exceeded", max_time)
         except SSLError:
             raise_by_max_time("An SSL error occurred", max_time)
         except Timeout:
@@ -987,14 +993,15 @@ def _check_connector_backend_access(url, timeout=120):
         except Exception as e:
             raise_by_max_time(str(e), max_time)
 
-        raise_by_max_time("Waiting time exceeded", max_time)
-
         time.sleep(10)
 
 
 def raise_by_max_time(msg, max_time):
     if datetime.now() >= max_time:
         raise Exception(msg)
+
+    sys.stdout.write('.')
+    sys.stdout.flush()
 
 
 def _get_resources(tenant_schema_path, type='Counter', _filter=None):
