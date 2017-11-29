@@ -14,7 +14,7 @@ setup(
     version='1.7.15',
     keywords='aps apsconnect connector automation',
     extras_require={
-        ':python_version<="2.7"': ['backports.tempfile==1.0']}
+        ':python_version<="2.7"': ['backports.tempfile==1.0']},
     packages=['apsconnectcli'],
     description='A command line tool for APS connector installation on Odin Automation in '
                 'the relaxed way.',
