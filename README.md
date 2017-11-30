@@ -72,8 +72,11 @@ Create deployment [ok]
 Create service [ok]
 Create ingress [ok]
 Checking service availability
-.
+..
 Expose service [ok]
+Checking connector backend availability
+.....
+Check connector backend host [ok]
 Connector backend - https://xxx
 [Success]
 ```
@@ -92,6 +95,7 @@ Importing connector http://aps.odin.com/app/connector
 Connector http://aps.odin.com/app/connector imported with id=206 [ok]
 Resource types creation [ok]
 Service template "connector" created with id=16 [ok]
+Limits for Service template "16" are applied [ok]
 ```
 
 _Note that `--network proxy` enables support of outbound proxy. [More details](https://doc.apsstandard.org/7.1/concepts/backend/connectors/proxy/#setting-external-application-instance)_
