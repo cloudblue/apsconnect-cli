@@ -19,10 +19,12 @@ pip install apsconnectcli
 CentOS 7.2 provide outdated Python 2.7.5 release, so you'll need an additional step to make it work properly:
 
 1. First install backport of ssl.match_hostname()
-    ```pip install -U backports.ssl-match-hostname
+    ```
+    pip install -U backports.ssl-match-hostname
     ```
 1. Install APSConnect CLI tool forcing requirements update
-    ```pip install -U apsconnectcli
+    ```
+    pip install -U apsconnectcli
     ```
 
 ### How to setup a kubernetes cluster
