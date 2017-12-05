@@ -9,9 +9,21 @@ _A command line tool for APS connector installation on Odin Automation in the re
 
 
 ## How to install
+APSConnect CLI tool is compatible with all recent Python releases of 2.7, 3.4, 3.5 and 3.6 versions.
+Typically, all you need is just PyPI client, like [pip](https://pypi.python.org/pypi/pip):
 ```
 pip install apsconnectcli
 ```
+
+### Python releases before 2.7.9 (like CentOS 7.2)
+CentOS 7.2 provide outdated Python 2.7.5 release, so you'll need an additional step to make it work properly:
+
+1. First install backport of ssl.match_hostname()
+    ```pip install -U backports.ssl-match-hostname
+    ```
+1. Install APSConnect CLI tool forcing requirements update
+    ```pip install -U apsconnectcli
+    ```
 
 ### How to setup a kubernetes cluster
 [Read a good step-by-step instruction by JetStack team](https://github.com/jetstack/kube-lego/tree/master/examples/nginx)
