@@ -699,7 +699,6 @@ def _create_secret(name, data_format, data, api, namespace='default', force=Fals
 
     if data_format == 'json':
         config = json.dumps(data, ensure_ascii=False)
-
     elif data_format == 'yaml':
         config = yaml.dump(data, allow_unicode=True, default_flow_style=False)
     else:
@@ -708,7 +707,7 @@ def _create_secret(name, data_format, data, api, namespace='default', force=Fals
     secret = {
         'apiVersion': 'v1',
         'data': {
-            'config': base64.b64encode(_to_bytes(config)).decode(),
+            'config.yml': base64.b64encode(_to_bytes(config)).decode(),
         },
         'kind': 'Secret',
         'metadata': {
@@ -762,7 +761,7 @@ def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
                             'env': [
                                 {
                                     'name': 'CONFIG_FILE',
-                                    'value': '/config/config',
+                                    'value': '/config/config.yml',
                                 },
                             ],
                             'livenessProbe': {
