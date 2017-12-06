@@ -91,6 +91,7 @@ AUTH_TEMPLATE = {
     ],
 }
 NULL_CFG_INFO = (None, None)
+IS_PYTHON3 = sys.version_info >= (3,)
 
 
 class APSConnectUtil:
@@ -213,11 +214,12 @@ class APSConnectUtil:
                 print("Loading config file: {}".format(config_file))
                 config_data, config_format = json.load(config), 'json'
         except ValueError:
-            with open(config_file, 'r') as config:
-                config_data, config_format = yaml.load(config), 'yaml'
-        except yaml.YAMLError as e:
-            print("Config file should be valid JSON or YAML structure, error: {}".format(e))
-            sys.exit(1)
+            try:
+                with open(config_file, 'r') as config:
+                    config_data, config_format = yaml.load(config), 'yaml'
+            except yaml.YAMLError as e:
+                print("Config file should be valid JSON or YAML structure, error: {}".format(e))
+                sys.exit(1)
         except Exception as e:
             print("Unable to read config file, error: {}".format(e))
             sys.exit(1)
@@ -678,7 +680,7 @@ def _get_cfg():
 
 
 def _to_bytes(raw_str):
-    if sys.version_info >= (3,):
+    if IS_PYTHON3:
         return bytes(raw_str, 'utf-8')
     else:
         return bytearray(raw_str, 'utf-8')
@@ -694,16 +696,18 @@ def _cluster_probe_connection(api, api_client):
 
 
 def _create_secret(name, data_format, data, api, namespace='default', force=False):
+
     if data_format == 'json':
-        config = json.dumps(data, ensure_ascii=False).encode('utf-8')
+        config = json.dumps(data, ensure_ascii=False)
     elif data_format == 'yaml':
         config = yaml.dump(data, allow_unicode=True, default_flow_style=False)
     else:
         raise Exception("Unknown config data format: {}".format(data_format))
+
     secret = {
         'apiVersion': 'v1',
         'data': {
-            'config': base64.b64encode(_to_bytes(config)).decode(),
+            'config.yml': base64.b64encode(_to_bytes(config)).decode(),
         },
         'kind': 'Secret',
         'metadata': {
@@ -757,7 +761,7 @@ def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
                             'env': [
                                 {
                                     'name': 'CONFIG_FILE',
-                                    'value': '/config/config',
+                                    'value': '/config/config.yml',
                                 },
                             ],
                             'livenessProbe': {
@@ -833,7 +837,7 @@ def _delete_deployment(name, api, namespace, core_api=None):
         label_selector='name={}'.format(name),
     )
 
-    if len(replica_set.items):
+    if replica_set and replica_set.items:
         for rs in replica_set.items:
             rs_name = rs.metadata.name
             api.delete_namespaced_replica_set(namespace=namespace, name=rs_name,
@@ -844,6 +848,10 @@ def _delete_deployment(name, api, namespace, core_api=None):
         namespace=namespace,
         label_selector='name={}'.format(name)
     )
+
+    if not pods or not pods.items:
+        return
+
     pod_names = [pod.metadata.name for pod in pods.items]
 
     for name in pod_names:
@@ -1033,7 +1041,7 @@ def _get_properties(schema_path):
     with open(schema_path) as file:
         try:
             properties = json.load(file)['properties']
-        except ValueError:
+        except (ValueError, KeyError):
             print("Schema is not correct json file")
             sys.exit(1)
 
