@@ -124,7 +124,7 @@ class CreateSecretTest(TestCase):
         return {
             'apiVersion': 'v1',
             'data': {
-                'config': base64.b64encode(_to_bytes(config)).decode(),
+                'config.yml': base64.b64encode(_to_bytes(config)).decode(),
             },
             'kind': 'Secret',
             'metadata': {
@@ -229,7 +229,7 @@ class CreateDeploymentBaseTest(TestCase):
                                 'env': [
                                     {
                                         'name': 'CONFIG_FILE',
-                                        'value': '/config/config',
+                                        'value': '/config/config.yml',
                                     },
                                 ],
                                 'livenessProbe': {
