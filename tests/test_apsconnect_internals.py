@@ -7,6 +7,7 @@ from apsconnectcli.apsconnect import (
     _osaapi_raise_for_status,
     _get_k8s_api_client,
     _get_properties,
+    _get_resclass_name,
     _cluster_probe_connection,
     _create_secret,
     _create_deployment,
@@ -558,3 +559,33 @@ class CreateServiceTest(TestCase):
         fake_core_v1.delete_namespaced_service.assert_called_once_with(**deletion_kwargs)
         fake_core_v1.create_namespaced_service.assert_called_once_with(
             namespace=namespace, body=service)
+
+
+class ResClassTest(TestCase):
+    """Tests for _get_resclass_name()"""
+
+    def test_get_resclass_name_for_current_units(self):
+        data = {
+            'Kbit/sec': 'rc.saas.resource.kbps',
+            'kb': 'rc.saas.resource',
+            'mb-h': 'rc.saas.resource.mbh',
+            'mhz': 'rc.saas.resource.mhz',
+            'mhzh': 'rc.saas.resource.mhzh',
+            'unit': 'rc.saas.resource.unit',
+            'unit-h': 'rc.saas.resource.unith'
+        }
+
+        for key, value in data.items():
+            self.assertEqual(_get_resclass_name(key), value)
+
+    def test_get_resclass_name_for_new_unit(self):
+        self.assertEqual(
+            _get_resclass_name('new-unit'),
+            'rc.saas.resource.unit',
+        )
+
+    def test_get_resclass_name_witout_unit(self):
+        self.assertEqual(
+            _get_resclass_name(''),
+            'rc.saas.resource.unit',
+        )
