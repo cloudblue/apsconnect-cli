@@ -500,9 +500,9 @@ class APSConnectUtil:
             # Create counters resource types
             counters = _get_counters(tenant_schema_path)
 
-            for counter in counters:
+            for counter, schema in counters.items():
                 payload = {
-                    'resclass_name': "rc.saas.resource.unit",
+                    'resclass_name': _get_resclass_name(schema['unit']),
                     'name': '{} {}'.format(connector_name, counter),
                     'act_params': [
                         {
@@ -527,9 +527,9 @@ class APSConnectUtil:
             # Create parameters resource types
             parameters = _get_parameters(tenant_schema_path)
 
-            for parameter in parameters:
+            for parameter, schema in parameters.items():
                 payload = {
-                    'resclass_name': "rc.saas.resource.unit",
+                    'resclass_name': _get_resclass_name(schema['unit']),
                     'name': '{} {}'.format(connector_name, parameter),
                     'act_params': [
                         {
@@ -1035,6 +1035,20 @@ def _get_parameters(tenant_schema_path):
     parameters = _get_resources(tenant_schema_path, 'Counter', lambda x: 'title' not in x[1])
     parameters.update(_get_resources(tenant_schema_path, 'Limit'))
     return parameters
+
+
+def _get_resclass_name(unit):
+    resclass_name = {
+        'Kbit/sec': 'rc.saas.resource.kbps',
+        'kb': 'rc.saas.resource',
+        'mb-h': 'rc.saas.resource.mbh',
+        'mhz': 'rc.saas.resource.mhz',
+        'mhzh': 'rc.saas.resource.mhzh',
+        'unit': 'rc.saas.resource.unit',
+        'unit-h': 'rc.saas.resource.unith'
+    }.get(unit)
+
+    return resclass_name or 'rc.saas.resource.unit'
 
 
 def _get_properties(schema_path):
