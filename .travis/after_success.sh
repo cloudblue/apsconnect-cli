@@ -8,6 +8,7 @@ fi
 if [[ $BUILD == 'LINUX' ]]; then
     bash <(curl -s https://codecov.io/bash)
     pyinstaller --onefile apsconnectcli/apsconnect.py
+    mv dist/apsconnect dist/apsconnect-lin
     sudo add-apt-repository ppa:ubuntu-wine/ppa -y
     sudo apt-get update -qq
     sudo apt-get install -qq wine

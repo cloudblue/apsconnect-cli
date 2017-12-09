@@ -50,7 +50,7 @@ deploy:
     api_key:
       secure: eHekIpu9YfgnWQT0PH3FcaWbu10WHemWeNtAS9gHLwpGA9+aFf1F/WgmB55OP10LVSZLS5jAZ39hqETZJO7lBc4a1drB0q7xfnEgip1drtNAcm0z1MOYzP3t4tQT8WfrqZDQJm92SQP691N47zEt7R8rsVJG10nFOgBl3uxv6h/JMI72DgVSHWTYL1nBTtzPpFdH4ktxDInhEz3gw+FJE1LM+roZRzlFDcWC3o/ZkCpYTL/6Ka4zAVJfZGHW0lROAIk6LInLV2QENjqOi1zsjpqFVxncuV94iWSRCD32/Ags32hTYqB3BLOOyGzqHBndk1trhErtdSkJf66lHLNQmydtD8w0s2i8PPk/tVpi0yamMfBSkhr+NmRrPKZbIIz06XBNIJO8Ha44lHxXSEHDYxMTcUNLm8IEj+vDpc35Vlvx+iRT9z8/YmBCcJeNv3BcduUr0/eMlaDQbtSg0PRdJ9ohJKLM7yPk8puyq08mKv2N92IxlKi/DGuwMBVdwbnrLpuupPKNMN4cYGLQnFF94gMXKnH/dRsrgew91v2Id5ha/i90SQ8v6DAOXuZJ6SXRv1nKkOen2kGPok0OvAnHtAPr7x2ysoTmBFKF8BKl236BXIEuiIM9/KGxU1czpe8F33b+vEBJSNEH5Z0jNfcVHafGS7qThB8ygU98csPjnO0=
     file:
-    - dist/apsconnect
+    - dist/apsconnect-lin
     - dist/apsconnect.exe
     on:
       tags: true
