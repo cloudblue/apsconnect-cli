@@ -1,26 +1,60 @@
 language: python
-python:
-- '2.7'
-- '3.4'
-- '3.5'
-- '3.6'
+
+matrix:
+  include:
+    - os: linux
+      python: 2.7
+    - os: linux
+      python: 3.4
+    - os: linux
+      python: 3.5
+    - os: linux
+      sudo: required
+      python: 3.6
+      env: BUILD=LINUX
+    - os: osx
+      language: generic
+      env: BUILD=OSX
+
 before_install:
-- pip install --upgrade setuptools pip
+- ./.travis/before_install.sh
+
 install:
 - pip install -r requirements.txt
 - pip install -r test-requirements.txt
+- pip install pyinstaller
+
 script:
-- python setup.py flake8
+- if [[ $TRAVIS_OS_NAME == 'osx' ]]; then python3 setup.py flake8; fi
+- if [[ $TRAVIS_OS_NAME == 'linux' ]]; then python setup.py flake8; fi
 - nose2 --with-coverage --coverage apsconnectcli/ --coverage-report xml
+
 after_success:
-- bash <(curl -s https://codecov.io/bash)
+- ./.travis/after_success.sh
+
 deploy:
-  provider: pypi
-  user: apslite
-  password:
-    secure: wA5257WHW0hWAwr+G1iBNbAUsHrsErB1/bHAD3mNpGoxGZUqggLiF+oHjKkdk/kzpCjyuPArzwHgJ0yCtjjMaNDg7x3LQsbmKkxW+tYIPmMEbKyVNBUVU8CzCnd9ktJp0jP0MFyRlzSmbiqYbF/Zt+jRZgOy8g/oMYtnv3ZgCskKY2MiedMZP8WDp/6jGb28zXxJC9VBrrMx8HAxBx7QLf2ez3JtTm1KBnQ3T2HKXDzvuYyhgB7FtfY7AAC7R3LSqu49oXNSCZ5RjvtMYup3zg77YLcb3fHyTWlVV+QwItikDZCCqPuJyhzZ9CkZpvUrh9dJYbL2Rs9Fnqt0U+wQly1YlnKQ620fUwRvFPV3B4h2m12QBbup4YCFiGufwlk53Wg/R1DuUNCs0RXw0oj+R9jECEuKtcdy7r4dOLWM4In7BT0Uxi0YM33bQcFDVWPAAMCkXCpo8zMvDhsozXbntcPhGar7inWVGf9qpXZzFduGYK8mYaDyKAHD355DzZ3i8kzeMatQj55RZA0fdPRPElkdfq4O28nwIXzmHLTsKnv1InrdBnvoay9lh29MuTojIeQ2A7UTwgrL06LQAASKoL8WG/N6rIXWLolX1NLydlYX2HsvC8eSHoF8YJKWZhlfcFdsyh137+oAPk1o3QrOUt9CgbC3SMsOw14//51gK5k=
-  on:
-    tags: true
-    all_branches: true
-    distributions: sdist bdist_wheel
-    repo: ingrammicro/apsconnect-cli
+  - provider: releases
+    skip_cleanup: true
+    api_key:
+      secure: eHekIpu9YfgnWQT0PH3FcaWbu10WHemWeNtAS9gHLwpGA9+aFf1F/WgmB55OP10LVSZLS5jAZ39hqETZJO7lBc4a1drB0q7xfnEgip1drtNAcm0z1MOYzP3t4tQT8WfrqZDQJm92SQP691N47zEt7R8rsVJG10nFOgBl3uxv6h/JMI72DgVSHWTYL1nBTtzPpFdH4ktxDInhEz3gw+FJE1LM+roZRzlFDcWC3o/ZkCpYTL/6Ka4zAVJfZGHW0lROAIk6LInLV2QENjqOi1zsjpqFVxncuV94iWSRCD32/Ags32hTYqB3BLOOyGzqHBndk1trhErtdSkJf66lHLNQmydtD8w0s2i8PPk/tVpi0yamMfBSkhr+NmRrPKZbIIz06XBNIJO8Ha44lHxXSEHDYxMTcUNLm8IEj+vDpc35Vlvx+iRT9z8/YmBCcJeNv3BcduUr0/eMlaDQbtSg0PRdJ9ohJKLM7yPk8puyq08mKv2N92IxlKi/DGuwMBVdwbnrLpuupPKNMN4cYGLQnFF94gMXKnH/dRsrgew91v2Id5ha/i90SQ8v6DAOXuZJ6SXRv1nKkOen2kGPok0OvAnHtAPr7x2ysoTmBFKF8BKl236BXIEuiIM9/KGxU1czpe8F33b+vEBJSNEH5Z0jNfcVHafGS7qThB8ygU98csPjnO0=
+    file:
+      - dist/apsconnect-mac
+    on:
+      tags: true
+      repo: themaxbelov/apsconnect-cli
+      branch: travis
+      condition: "$BUILD = OSX"
+
+  - provider: releases
+    skip_cleanup: true
+    api_key:
+      secure: eHekIpu9YfgnWQT0PH3FcaWbu10WHemWeNtAS9gHLwpGA9+aFf1F/WgmB55OP10LVSZLS5jAZ39hqETZJO7lBc4a1drB0q7xfnEgip1drtNAcm0z1MOYzP3t4tQT8WfrqZDQJm92SQP691N47zEt7R8rsVJG10nFOgBl3uxv6h/JMI72DgVSHWTYL1nBTtzPpFdH4ktxDInhEz3gw+FJE1LM+roZRzlFDcWC3o/ZkCpYTL/6Ka4zAVJfZGHW0lROAIk6LInLV2QENjqOi1zsjpqFVxncuV94iWSRCD32/Ags32hTYqB3BLOOyGzqHBndk1trhErtdSkJf66lHLNQmydtD8w0s2i8PPk/tVpi0yamMfBSkhr+NmRrPKZbIIz06XBNIJO8Ha44lHxXSEHDYxMTcUNLm8IEj+vDpc35Vlvx+iRT9z8/YmBCcJeNv3BcduUr0/eMlaDQbtSg0PRdJ9ohJKLM7yPk8puyq08mKv2N92IxlKi/DGuwMBVdwbnrLpuupPKNMN4cYGLQnFF94gMXKnH/dRsrgew91v2Id5ha/i90SQ8v6DAOXuZJ6SXRv1nKkOen2kGPok0OvAnHtAPr7x2ysoTmBFKF8BKl236BXIEuiIM9/KGxU1czpe8F33b+vEBJSNEH5Z0jNfcVHafGS7qThB8ygU98csPjnO0=
+    file:
+    - dist/apsconnect
+    - dist/apsconnect.exe
+    on:
+      tags: true
+      repo: themaxbelov/apsconnect-cli
+      branch: travis
+      condition: "$BUILD = LINUX"
+
