@@ -12,6 +12,7 @@ from apsconnectcli.apsconnect import (
     _create_secret,
     _create_deployment,
     _create_service,
+    _extract_files,
     _to_bytes,
 )
 
@@ -589,3 +590,48 @@ class ResClassTest(TestCase):
             _get_resclass_name(''),
             'rc.saas.resource.unit',
         )
+
+
+class ExtractFilesTest(TestCase):
+    def test_user_detected_correctly_if_user_schema(self):
+        with patch('apsconnectcli.apsconnect.zipfile') as zipfile_mock:
+            zip_ref = MagicMock('zz')
+
+            def extract(filename, path):
+                return filename
+
+            zip_ref.extract = extract
+            zipfile_mock.ZipFile.return_value.__enter__.return_value = zip_ref
+
+            package_info = _extract_files('zz', 'zz')
+            self.assertTrue(package_info.user_service)
+
+    def test_user_detected_correctly_if_user_user_schema(self):
+        with patch('apsconnectcli.apsconnect.zipfile') as zipfile_mock:
+            zip_ref = MagicMock('zz')
+
+            def extract(filename, path):
+                if 'user' in filename and 'user.user' not in filename:
+                    raise KeyError("Fail")
+                return filename
+
+            zip_ref.extract = extract
+            zipfile_mock.ZipFile.return_value.__enter__.return_value = zip_ref
+
+            package_info = _extract_files('zz', 'zz')
+            self.assertTrue(package_info.user_service)
+
+    def test_user_detected_correctly_if_no_user_integration(self):
+        with patch('apsconnectcli.apsconnect.zipfile') as zipfile_mock:
+            zip_ref = MagicMock('zz')
+
+            def extract(filename, path):
+                if 'user' in filename:
+                    raise KeyError("Fail")
+                return filename
+
+            zip_ref.extract = extract
+            zipfile_mock.ZipFile.return_value.__enter__.return_value = zip_ref
+
+            package_info = _extract_files('zz', 'zz')
+            self.assertFalse(package_info.user_service)

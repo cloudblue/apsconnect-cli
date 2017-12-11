@@ -11,6 +11,7 @@ import base64
 import warnings
 import zipfile
 import pkg_resources
+from collections import namedtuple
 from future.moves.urllib.parse import urlparse
 from shutil import copyfile
 from xml.etree import ElementTree as xml_et
@@ -92,6 +93,8 @@ AUTH_TEMPLATE = {
 }
 NULL_CFG_INFO = (None, None)
 IS_PYTHON3 = sys.version_info >= (3,)
+
+PackageInfo = namedtuple('PackageInfo', 'meta_path tenant_schema_path app_schema_path user_service')
 
 
 class APSConnectUtil:
@@ -300,18 +303,10 @@ class APSConnectUtil:
                 copyfile(os.path.expanduser(source), os.path.join(tdir, package_name))
 
             package_path = os.path.join(tdir, package_name)
-            with zipfile.ZipFile(package_path, 'r') as zip_ref:
-                meta_path = zip_ref.extract('APP-META.xml', path=tdir)
-                tenant_schema_path = zip_ref.extract('schemas/tenant.schema', tdir)
-                app_schema_path = zip_ref.extract('schemas/app.schema', tdir)
 
-                try:
-                    zip_ref.extract('schemas/user.schema', tdir)
-                    user_service = True
-                except KeyError:
-                    user_service = False
+            package_info = _extract_files(package_path, tdir)
 
-            tree = xml_et.ElementTree(file=meta_path)
+            tree = xml_et.ElementTree(file=package_info.meta_path)
             namespace = '{http://aps-standard.org/ns/2}'
             connector_id = tree.find('{}id'.format(namespace)).text
             version = tree.find('{}version'.format(namespace)).text
@@ -370,7 +365,7 @@ class APSConnectUtil:
             # Get Unique OA id for using as hubId parameter while endpoint deploying
             base_aps_url = _get_aps_url(**{k: _get_cfg()[k] for k in APS_CONNECT_PARAMS})
 
-            app_properties = _get_properties(app_schema_path)
+            app_properties = _get_properties(package_info.app_schema_path)
 
             if 'hubId' in app_properties:
                 url = '{}/{}'.format(
@@ -472,7 +467,7 @@ class APSConnectUtil:
             for id in list(resource_types_ids):
                 limited_resources[id] = 1
 
-            if user_service:
+            if package_info.user_service:
                 user_resource_type_payload = {
                     'resclass_name': 'rc.saas.service',
                     'name': '{} users'.format(connector_name),
@@ -498,7 +493,7 @@ class APSConnectUtil:
                 resource_types_ids.append(response['result']['resource_type_id'])
 
             # Create counters resource types
-            counters = _get_counters(tenant_schema_path)
+            counters = _get_counters(package_info.tenant_schema_path)
 
             for counter, schema in counters.items():
                 payload = {
@@ -525,7 +520,7 @@ class APSConnectUtil:
                 resource_types_ids.append(response['result']['resource_type_id'])
 
             # Create parameters resource types
-            parameters = _get_parameters(tenant_schema_path)
+            parameters = _get_parameters(package_info.tenant_schema_path)
 
             for parameter, schema in parameters.items():
                 payload = {
@@ -1118,6 +1113,25 @@ def _get_hub_info():
     host = "{}:{}".format(hub_cfg['host'], hub_cfg['port'])
     user = hub_cfg['user']
     return (host, user)
+
+
+def _extract_files(package, tempdir):
+    with zipfile.ZipFile(package, 'r') as zip_ref:
+        meta_path = zip_ref.extract('APP-META.xml', path=tempdir)
+        tenant_schema_path = zip_ref.extract('schemas/tenant.schema', tempdir)
+        app_schema_path = zip_ref.extract('schemas/app.schema', tempdir)
+
+        def file_exists(filename):
+            try:
+                zip_ref.extract(filename, tempdir)
+            except KeyError:
+                return False
+            else:
+                return True
+
+        user_service = file_exists('schemas/user.schema') or \
+            file_exists('schemas/user.user.schema')
+    return PackageInfo(meta_path, tenant_schema_path, app_schema_path, user_service)
 
 
 def main():
