@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
+bash <(curl -s https://codecov.io/bash)
+
 if [[ $BUILD == 'OSX' ]]; then
     pyinstaller --onefile apsconnectcli/apsconnect.py
     mv dist/apsconnect dist/apsconnect-mac
 fi
 
 if [[ $BUILD == 'LINUX' ]]; then
-    bash <(curl -s https://codecov.io/bash)
     pyinstaller --onefile apsconnectcli/apsconnect.py
     mv dist/apsconnect dist/apsconnect-lin
     sudo add-apt-repository ppa:ubuntu-wine/ppa -y
