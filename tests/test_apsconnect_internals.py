@@ -4,6 +4,7 @@ from unittest import TestCase
 
 from apsconnectcli.apsconnect import (
     KUBE_FILE_PATH,
+    _assert_hub_version,
     _osaapi_raise_for_status,
     _get_cfg,
     _get_k8s_api_client,
@@ -708,3 +709,17 @@ class GetCfgTest(TestCase):
             self.assertEqual(config, "Config data")
             self.assertFalse(print_mock.called)
             sys_mock.exit.assert_not_called()
+
+
+class AssertHubVersion(TestCase):
+    def test_supported_version(self):
+        with patch('apsconnectcli.apsconnect.sys') as sys_mock:
+            _assert_hub_version('oa-7.13-1216')
+
+            sys_mock.exit.assert_not_called()
+
+    def test_unsupported_version(self):
+        with patch('apsconnectcli.apsconnect.sys') as sys_mock:
+            _assert_hub_version('oa-7.0-1216')
+
+            sys_mock.exit.assert_called_with(1)

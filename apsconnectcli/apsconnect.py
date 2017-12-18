@@ -618,7 +618,7 @@ def _get_hub_version(hub):
 def _assert_hub_version(hub_version):
     supported_version = False
 
-    match = re.match(r'^oa-(?P<major>\d)\.(?P<minor>\d)-', hub_version)
+    match = re.match(r'^oa-(?P<major>\d)\.(?P<minor>\d+)-', hub_version)
     if match:
         major = int(match.groupdict()['major'])
         minor = int(match.groupdict()['minor'])
