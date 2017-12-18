@@ -118,12 +118,12 @@ class APSConnectUtil:
         user_data['username'] = user
         user_data['password'] = pwd
 
-        _, temp_config = tempfile.mkstemp()
-        with open(temp_config, 'w') as fd:
-            yaml.safe_dump(auth_template, fd)
+        fd, tmp_path = tempfile.mkstemp()
+        with os.fdopen(fd, 'w') as tmp:
+            yaml.safe_dump(auth_template, tmp)
 
         try:
-            api_client = _get_k8s_api_client(temp_config)
+            api_client = _get_k8s_api_client(tmp_path)
             api = client.VersionApi(api_client)
             code = api.get_code()
             print("Connectivity with k8s cluster api [ok]")
@@ -132,8 +132,9 @@ class APSConnectUtil:
             print("Unable to communicate with k8s cluster {}, error: {}".format(
                 cluster_endpoint, e))
             sys.exit(1)
-
-        os.remove(temp_config)
+        finally:
+            os.close(fd)
+            os.remove(tmp_path)
 
         if not os.path.exists(KUBE_DIR_PATH):
             os.mkdir(KUBE_DIR_PATH)
