@@ -29,6 +29,7 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 from apsconnectcli.action_logger import Logger
+from apsconnectcli.cluster import read_cluster_certificate
 
 if sys.version_info >= (3,):
     import tempfile
@@ -102,12 +103,7 @@ class APSConnectUtil:
 
     def init_cluster(self, cluster_endpoint, user, pwd, ca_cert):
         """ Connect your kubernetes (k8s) cluster"""
-        try:
-            with open(ca_cert) as _file:
-                ca_cert_data = base64.b64encode(_file.read().encode())
-        except Exception as e:
-            print("Unable to read ca_cert file, error: {}".format(e))
-            sys.exit(1)
+        ca_cert_data = read_cluster_certificate(ca_cert)
 
         auth_template = copy.deepcopy(AUTH_TEMPLATE)
         cluster = auth_template['clusters'][0]['cluster']
