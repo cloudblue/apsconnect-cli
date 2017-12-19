@@ -29,6 +29,7 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 from apsconnectcli.action_logger import Logger
+from apsconnectcli.cluster import read_cluster_certificate
 
 if sys.version_info >= (3,):
     import tempfile
@@ -102,12 +103,7 @@ class APSConnectUtil:
 
     def init_cluster(self, cluster_endpoint, user, pwd, ca_cert):
         """ Connect your kubernetes (k8s) cluster"""
-        try:
-            with open(ca_cert) as _file:
-                ca_cert_data = base64.b64encode(_file.read().encode())
-        except Exception as e:
-            print("Unable to read ca_cert file, error: {}".format(e))
-            sys.exit(1)
+        ca_cert_data = read_cluster_certificate(ca_cert)
 
         auth_template = copy.deepcopy(AUTH_TEMPLATE)
         cluster = auth_template['clusters'][0]['cluster']
@@ -118,12 +114,12 @@ class APSConnectUtil:
         user_data['username'] = user
         user_data['password'] = pwd
 
-        _, temp_config = tempfile.mkstemp()
-        with open(temp_config, 'w') as fd:
-            yaml.safe_dump(auth_template, fd)
+        fd, tmp_path = tempfile.mkstemp()
+        with os.fdopen(fd, 'w') as tmp:
+            yaml.safe_dump(auth_template, tmp)
 
         try:
-            api_client = _get_k8s_api_client(temp_config)
+            api_client = _get_k8s_api_client(tmp_path)
             api = client.VersionApi(api_client)
             code = api.get_code()
             print("Connectivity with k8s cluster api [ok]")
@@ -132,8 +128,9 @@ class APSConnectUtil:
             print("Unable to communicate with k8s cluster {}, error: {}".format(
                 cluster_endpoint, e))
             sys.exit(1)
-
-        os.remove(temp_config)
+        finally:
+            os.close(fd)
+            os.remove(tmp_path)
 
         if not os.path.exists(KUBE_DIR_PATH):
             os.mkdir(KUBE_DIR_PATH)
@@ -617,7 +614,7 @@ def _get_hub_version(hub):
 def _assert_hub_version(hub_version):
     supported_version = False
 
-    match = re.match(r'^oa-(?P<major>\d)\.(?P<minor>\d)-', hub_version)
+    match = re.match(r'^oa-(?P<major>\d)\.(?P<minor>\d+)-', hub_version)
     if match:
         major = int(match.groupdict()['major'])
         minor = int(match.groupdict()['minor'])
