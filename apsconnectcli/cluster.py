@@ -18,7 +18,6 @@ sys.stderr = Logger(LOG_FILE, sys.stderr)
 def read_cluster_certificate(ca_cert):
     try:
         with open(ca_cert) as _file:
-            print(_file)
             ca_cert_data = base64.b64encode(_file.read().encode())
     except Exception as e:
         print("Unable to read ca_cert file, error: {}".format(e))
