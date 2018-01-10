@@ -86,7 +86,8 @@ class TestClusterOperation(TestCase):
 
     def test_error_report_generic(self):
         with patch('apsconnectcli.cluster.get_log'):
-            message = error_report('name', 'SomeErrorCode', 'SomeErrorMessage')
+            message = error_report('name', MagicMock(), 'default',
+                                   'SomeErrorCode', 'SomeErrorMessage')
 
         self.assertTrue('SomeError' in message)
         self.assertTrue('SomeErrorMessage' in message)
@@ -94,7 +95,8 @@ class TestClusterOperation(TestCase):
     def test_error_report_crashloopbackoff(self):
         with patch('apsconnectcli.cluster.get_log') as log_mock:
             log_mock.return_value = 'LOG'
-            message = error_report('name', 'CrashLoopBackOff', 'SomeErrorMessage')
+            message = error_report('name', MagicMock(), 'default',
+                                   'CrashLoopBackOff', 'SomeErrorMessage')
 
         self.assertTrue('Container failed to start' in message)
         self.assertTrue('LOG' in message)

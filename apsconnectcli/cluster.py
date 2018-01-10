@@ -71,6 +71,8 @@ def poll_deployment(core_v1, ext_v1, namespace, name):
         if state.waiting:
             if state.waiting.reason in error_reasons:
                 error_message = error_report(name,
+                                             core_v1,
+                                             namespace,
                                              state.waiting.reason,
                                              state.waiting.message)
                 return AvailabilityCheckResult(False, error_message)
@@ -112,8 +114,8 @@ def get_log(name, core_v1, namespace):
     return log
 
 
-def error_report(name, reason, message):
+def error_report(name, api, namespace, reason, message):
     if reason == 'CrashLoopBackOff':
-        log = get_log(name)
+        log = get_log(name, api, namespace)
         return "Container failed to start. Logs:\n{}".format(log)
     return "Error code: {};\n\nMessage: {}".format(reason, message)
