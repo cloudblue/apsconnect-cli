@@ -607,7 +607,7 @@ def _get_aps_url(aps_host, aps_port, use_tls_aps):
 def _get_hub_version(hub):
     r = hub.statistics.getStatisticsReport(reports=[{'name': 'report-for-cep', 'value': ''}])
     _osaapi_raise_for_status(r)
-    tree = xml_et.fromstring(r['result'][0]['value'])
+    tree = xml_et.fromstring(r['result'][0]['value'].encode('utf-8'))
     return tree.find('ClientVersion').text
 
 
