@@ -3,12 +3,12 @@
 bash <(curl -s https://codecov.io/bash)
 
 if [[ $BUILD == 'OSX' ]]; then
-    pyinstaller --onefile apsconnectcli/apsconnect.py
+    pyinstaller --add-data "VERSION:." --onefile apsconnectcli/apsconnect.py
     mv dist/apsconnect dist/apsconnect-mac
 fi
 
 if [[ $BUILD == 'LINUX' ]]; then
-    pyinstaller --onefile apsconnectcli/apsconnect.py
+    pyinstaller --add-data "VERSION:." --onefile apsconnectcli/apsconnect.py
     mv dist/apsconnect dist/apsconnect-lin
     sudo add-apt-repository ppa:ubuntu-wine/ppa -y
     sudo apt-get update -qq
@@ -18,5 +18,5 @@ if [[ $BUILD == 'LINUX' ]]; then
     wine c:\\Python\\python.exe c:\\Python\\scripts\\pip.exe install pip --upgrade
     wine c:\\Python\\python.exe c:\\Python\\scripts\\pip.exe install pyinstaller --upgrade
     wine c:\\Python\\python.exe c:\\Python\\scripts\\pip.exe install -r requirements.txt
-    wine c:\\Python\\scripts\\pyinstaller.exe --onefile apsconnectcli/apsconnect.py
+    wine c:\\Python\\scripts\\pyinstaller.exe --add-data "VERSION:." --onefile apsconnectcli/apsconnect.py
 fi
