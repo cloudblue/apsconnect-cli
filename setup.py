@@ -11,7 +11,7 @@ install_reqs = parse_requirements(os.path.join(os.path.dirname(os.path.abspath(_
 
 here = abspath(dirname(__file__))
 
-with open(join(here, 'VERSION'), encoding='utf-8') as f:
+with open(join(here, 'VERSION')) as f:
     VERSION = f.read()
 
 setup(
