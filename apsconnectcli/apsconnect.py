@@ -29,7 +29,7 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 from apsconnectcli.action_logger import Logger
-from apsconnectcli.cluster import read_cluster_certificate
+from apsconnectcli.cluster import read_cluster_certificate, poll_deployment
 
 if sys.version_info >= (3,):
     import tempfile
@@ -619,7 +619,7 @@ def _get_aps_url(aps_host, aps_port, use_tls_aps):
 def _get_hub_version(hub):
     r = hub.statistics.getStatisticsReport(reports=[{'name': 'report-for-cep', 'value': ''}])
     _osaapi_raise_for_status(r)
-    tree = xml_et.fromstring(r['result'][0]['value'])
+    tree = xml_et.fromstring(r['result'][0]['value'].encode('utf-8'))
     return tree.find('ClientVersion').text
 
 
@@ -835,6 +835,15 @@ def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
         _delete_deployment(name, api=api, namespace=namespace, core_api=core_api)
 
     api.create_namespaced_deployment(namespace=namespace, body=template)
+
+    # Check deployment availability
+    sys.stdout.write("Waiting for deployment to become ready...")
+    sys.stdout.flush()
+    poll_result = poll_deployment(core_v1=core_api, ext_v1=api, namespace=namespace, name=name)
+    print()
+    if not poll_result.available:
+        print(poll_result.message)
+        sys.exit(1)
 
 
 def _delete_deployment(name, api, namespace, core_api=None):

@@ -22,6 +22,8 @@ from apsconnectcli.apsconnect import (
     get_version,
 )
 
+from apsconnectcli.cluster import AvailabilityCheckResult
+
 from tests.fakes import FakeData, FakeK8sApi
 from tests import utils
 
@@ -515,6 +517,26 @@ class CreateDeploymentOverExistingItemsTest(CreateDeploymentBaseTest):
                             fake_ext_v1=self._create_fake_ext_api_with_none_replica_set(),
                             assert_ext_v1_fn=self._assert_ext_v1_called_for_fresh_deployment,
                             assert_core_v1_fn=self._assert_core_v1_called_for_pods)
+
+
+class CreateDeploymentPollingTest(TestCase):
+    def test_poll_ok(self):
+        api = MagicMock()
+        with patch('apsconnectcli.apsconnect.poll_deployment') as poll_deployment_mock, \
+                patch('apsconnectcli.apsconnect.sys') as sys_mock:
+            poll_deployment_mock.return_value = AvailabilityCheckResult(True, 'OK')
+            _create_deployment('name', 'image', api)
+            self.assertTrue(poll_deployment_mock.called)
+            sys_mock.exit.assert_not_called()
+
+    def test_poll_error(self):
+        api = MagicMock()
+        with patch('apsconnectcli.apsconnect.poll_deployment') as poll_deployment_mock, \
+                patch('apsconnectcli.apsconnect.sys') as sys_mock:
+            poll_deployment_mock.return_value = AvailabilityCheckResult(False, 'Error')
+            _create_deployment('name', 'image', api)
+            self.assertTrue(poll_deployment_mock.called)
+            sys_mock.exit.assert_called_with(1)
 
 
 class CreateServiceTest(TestCase):
