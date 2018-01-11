@@ -852,10 +852,12 @@ class TestHelpers(TestCase):
 
     def test_main_prints_error_and_exists_if_there_are_problems(self):
         with patch('apsconnectcli.apsconnect.fire') as fire_mock, \
-             patch('apsconnectcli.apsconnect.get_version') as get_version_mock, \
-                patch(_BUILTINS_PRINT) as print_mock:
+                patch('apsconnectcli.apsconnect.get_version'), \
+                patch(_BUILTINS_PRINT) as print_mock, \
+                patch('apsconnectcli.apsconnect.sys') as sys_mock:
 
-            get_version_mock.return_value = '100.500'
+            fire_mock.Fire.side_effect = Exception('All is lost')
             main()
 
-        self.assertTrue('100.500' in print_mock.call_args[0][0])
+        self.assertTrue('All is lost' in print_mock.call_args[0][0])
+        sys_mock.exit.assert_called_once_with(1)
