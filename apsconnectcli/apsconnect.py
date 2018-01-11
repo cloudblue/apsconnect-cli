@@ -40,7 +40,6 @@ else:
     import tempfile
     from backports.tempfile import TemporaryDirectory
 
-
 LOG_DIR = os.path.expanduser('~/.apsconnect')
 
 if not os.path.exists(LOG_DIR):
@@ -94,6 +93,10 @@ AUTH_TEMPLATE = {
 }
 NULL_CFG_INFO = (None, None)
 IS_PYTHON3 = sys.version_info >= (3,)
+
+LATEST_RELEASE_URL = 'https://api.github.com/repos/ingrammicro/apsconnect-cli/releases/latest'
+REQUEST_TIMEOUT = 5
+GITHUB_RELEASES_PAGE = 'https://github.com/ingrammicro/apsconnect-cli/releases/'
 
 PackageInfo = namedtuple('PackageInfo', 'meta_path tenant_schema_path app_schema_path user_service')
 
@@ -196,8 +199,17 @@ class APSConnectUtil:
         sys.exit(0)
 
     def version(self):
-        print("apsconnect-cli v.{} built with love."
-              .format(pkg_resources.get_distribution('apsconnectcli').version))
+        package_version = get_version()
+        latest_version = get_latest_version()
+
+        if package_version:
+            print("apsconnect-cli v{} built with love.".format(package_version))
+            if latest_version and latest_version != package_version:
+                print('apsconnect-cli v{} is available, check it here: {}'
+                      .format(latest_version, GITHUB_RELEASES_PAGE))
+        else:
+            print("Could not determine apsconnect-cli version. Check {} for latest release."
+                  .format(GITHUB_RELEASES_PAGE))
 
     def install_backend(self, name, image, config_file, hostname, healthcheck_path=None,
                         root_path='/', namespace='default', replicas=2,
@@ -702,7 +714,6 @@ def _cluster_probe_connection(api, api_client):
 
 
 def _create_secret(name, data_format, data, api, namespace='default', force=False):
-
     if data_format == 'json':
         config = json.dumps(data, ensure_ascii=False)
     elif data_format == 'yaml':
@@ -1145,12 +1156,36 @@ def _extract_files(package, tempdir):
     return PackageInfo(meta_path, tenant_schema_path, app_schema_path, user_service)
 
 
-def main():
+def bin_version():
+    """
+    This method will return version in binaries built with pyinstaller.
+    In all other cases it will return NONE.
+    """
     try:
-        print("APSConnect-cli v.{}".format(
-            pkg_resources.get_distribution('apsconnectcli').version))
+        with open(os.path.join(sys._MEIPASS, 'VERSION')) as f:
+            return f.read()
+    except:
+        return None
+
+
+def get_version():
+    try:
+        return pkg_resources.get_distribution('apsconnectcli').version
     except pkg_resources.DistributionNotFound:
-        pass
+        return bin_version()
+
+
+def get_latest_version():
+    try:
+        return get(LATEST_RELEASE_URL, timeout=REQUEST_TIMEOUT).json()['tag_name'][1:]
+    except:
+        return None
+
+
+def main():
+    version = get_version()
+    if version:
+        print("APSConnect-cli v{}".format(get_version()))
 
     try:
         log_entry = ("=============================\n{}\n".format(" ".join(sys.argv)))
