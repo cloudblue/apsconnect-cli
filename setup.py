@@ -17,7 +17,7 @@ with open(join(here, 'VERSION'), encoding='utf-8') as f:
 setup(
     name='apsconnectcli',
     author='Ingram Micro',
-    version='1.7.21',
+    version=VERSION,
     keywords='aps apsconnect connector automation',
     extras_require={
         ':python_version<="2.7"': ['backports.tempfile==1.0']},
