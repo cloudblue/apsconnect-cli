@@ -297,7 +297,7 @@ class APSConnectUtil:
         print("[Success]")
 
     def install_frontend(self, source, oauth_key, oauth_secret, backend_url, settings_file=None,
-                         network='public', hub_id=None):
+                         network='proxy', hub_id=None):
         """ Install connector-frontend in Odin Automation Hub, --source can be http(s):// or
         filepath"""
 
