@@ -1,2 +1,3 @@
 include requirements.txt
 include tests_requirements.txt
+include VERSION
