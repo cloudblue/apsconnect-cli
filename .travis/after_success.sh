@@ -18,5 +18,5 @@ if [[ $BUILD == 'LINUX' ]]; then
     wine c:\\Python\\python.exe c:\\Python\\scripts\\pip.exe install pip --upgrade
     wine c:\\Python\\python.exe c:\\Python\\scripts\\pip.exe install pyinstaller --upgrade
     wine c:\\Python\\python.exe c:\\Python\\scripts\\pip.exe install -r requirements.txt
-    wine c:\\Python\\scripts\\pyinstaller.exe --add-data "VERSION:." --onefile apsconnectcli/apsconnect.py
+    wine c:\\Python\\scripts\\pyinstaller.exe --add-data "VERSION;." --onefile apsconnectcli/apsconnect.py
 fi
