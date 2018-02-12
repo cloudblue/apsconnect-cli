@@ -26,6 +26,7 @@ setup(
                 'the relaxed way.',
     url='https://github.com/ingrammicro/apsconnect-cli',
     license='Apache Software License',
+    include_package_data=True,
     install_requires=[str(ir.req) for ir in install_reqs],
     entry_points={
         'console_scripts': [
