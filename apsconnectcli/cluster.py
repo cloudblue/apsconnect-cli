@@ -93,18 +93,17 @@ def poll_deployment(core_v1, ext_v1, namespace, name):
 def check_containers_exist(core_v1, namespace, name, num_retries=5, poll_interval=5):
     attempt_num = 0
     while True:
-        pod = core_v1.list_namespaced_pod(namespace=namespace,
-                                          label_selector='name={}'.format(name)).items[0]
-        if pod.status.container_statuses:
+        pods = core_v1.list_namespaced_pod(namespace=namespace,
+                                           label_selector='name={}'.format(name)).items
+        if pods and pods[0].status.container_statuses:
             return True
 
-        sleep(poll_interval)
         attempt_num += 1
         if attempt_num >= num_retries:
             break
+        sleep(poll_interval)
 
-    if not pod.status.container_statuses:
-        return False
+    return False
 
 
 def get_log(name, core_v1, namespace):
