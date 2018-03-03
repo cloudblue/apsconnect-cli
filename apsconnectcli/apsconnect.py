@@ -1255,7 +1255,7 @@ def _create_image_pull_secret(name, user_name, user_password, endpoint,
                 'name': image_pull_secret,
                 'namespace': namespace,
             },
-	        'type': 'kubernetes.io/dockerconfigjson',
+            'type': 'kubernetes.io/dockerconfigjson',
         }
 
         if force:
@@ -1270,6 +1270,7 @@ def _create_image_pull_secret(name, user_name, user_password, endpoint,
         raise e
 
     return image_pull_secret
+
 
 def main():
     version = get_version()
