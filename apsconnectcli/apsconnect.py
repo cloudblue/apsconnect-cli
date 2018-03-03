@@ -30,6 +30,7 @@ from kubernetes.client.rest import ApiException
 
 from apsconnectcli.action_logger import Logger
 from apsconnectcli.cluster import read_cluster_certificate, poll_deployment
+from apsconnectcli.awsmanager.ecr import ECRClient
 
 if sys.version_info >= (3,):
     import tempfile
@@ -212,8 +213,8 @@ class APSConnectUtil:
                   .format(GITHUB_RELEASES_PAGE))
 
     def install_backend(self, name, image, config_file, hostname, healthcheck_path=None,
-                        root_path='/', namespace='default', replicas=2,
-                        tls_secret_name=None, force=False):
+                        aws_ecr_key=None, aws_ecr_secret=None, root_path='/', namespace='default',
+                        replicas=2, tls_secret_name=None, force=False):
         """ Install connector-backend in the k8s cluster"""
         if healthcheck_path:
             print("WARNING --healthcheck-path is deprecated and will be dropped in future releases."
@@ -250,8 +251,31 @@ class APSConnectUtil:
             print("Can't create config in cluster, error: {}".format(e))
             sys.exit(1)
 
+        image_pull_secret = None
+        if aws_ecr_key and aws_ecr_secret:
+            image_data = image.split('.')
+            region = image_data[3]
+            registry_id = image_data[0]
+
+            user_name = "AWS"
+
+            ecr = ECRClient(region, aws_ecr_key, aws_ecr_secret)
+            auth_response = ecr.get_authorization_token([registry_id])
+            user_password = str(auth_response['authorizationData'][0]['authorizationToken'])
+            endpoint = str(auth_response['authorizationData'][0]['proxyEndpoint'])
+            endpoint = str.replace(endpoint, 'https://', '')
+
+            if user_name and user_password:
+                try:
+                    image_pull_secret = _create_image_pull_secret(name, user_name, user_password,
+                                                                  endpoint, core_v1, namespace)
+                    print("Create image pull secret [ok]")
+                except Exception as e:
+                    print("Can't create image pull secret in cluster, error: {}".format(e))
+                    sys.exit(1)
+
         try:
-            _create_deployment(name, image, ext_v1, healthcheck_path, replicas,
+            _create_deployment(name, image, ext_v1, image_pull_secret, healthcheck_path, replicas,
                                namespace, force, core_api=core_v1)
             print("Create deployment [ok]")
         except Exception as e:
@@ -754,7 +778,7 @@ def _delete_secret(name, api, namespace):
             raise
 
 
-def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
+def _create_deployment(name, image, api, image_pull_secret=None, healthcheck_path='/', replicas=2,
                        namespace='default', force=False, core_api=None):
     template = {
         'apiVersion': 'extensions/v1beta1',
@@ -830,6 +854,10 @@ def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
             },
         },
     }
+
+    if image_pull_secret is not None:
+        image_pull_secret_tag = [{'name': image_pull_secret}]
+        template["spec"]["template"]["spec"]['imagePullSecrets'] = image_pull_secret_tag
 
     if force:
         _delete_deployment(name, api=api, namespace=namespace, core_api=core_api)
@@ -997,7 +1025,8 @@ def _polling_service_access(name, ext_v1, namespace, timeout=120):
 
             sys.stdout.write('.')
             sys.stdout.flush()
-        except:
+        except Exception as e:
+            print("Error: {}".format(e))
             raise
 
         if datetime.now() > max_time:
@@ -1173,7 +1202,8 @@ def bin_version():
     try:
         with open(os.path.join(sys._MEIPASS, 'VERSION')) as f:
             return f.read()
-    except:
+    except Exception as e:
+        print("Error: {}".format(e))
         return None
 
 
@@ -1187,9 +1217,59 @@ def get_version():
 def get_latest_version():
     try:
         return get(LATEST_RELEASE_URL, timeout=REQUEST_TIMEOUT).json()['tag_name'][1:]
-    except:
+    except Exception as e:
+        print("Error: {}".format(e))
         return None
 
+
+def _create_image_pull_secret(name, user_name, user_password, endpoint,
+                              api, namespace='default', force=False):
+    try:
+        image_pull_secret = 'ips' + name
+
+        auth_password = user_password
+        user_password = str(base64.b64decode(user_password)).split(':')[1]
+
+        secret = {
+            'auths': {
+                endpoint: {
+                    'username': user_name,
+                    'password': user_password,
+                    'email': 'none',
+                    'auth': auth_password,
+                }
+            }
+        }
+
+        secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
+
+        print(secret_b64encode)
+
+        body = {
+            'api_version': 'v1',
+            'data': {
+                '.dockerconfigjson': secret_b64encode,
+            },
+            'kind': 'Secret',
+            'metadata': {
+                'name': image_pull_secret,
+                'namespace': namespace,
+            },
+	        'type': 'kubernetes.io/dockerconfigjson',
+        }
+
+        if force:
+            _delete_secret(image_pull_secret, api, namespace)
+
+        api.create_namespaced_secret(
+            namespace=namespace,
+            body=body,
+        )
+    except Exception as e:
+        print("Error: {}".format(e))
+        raise e
+
+    return image_pull_secret
 
 def main():
     version = get_version()
