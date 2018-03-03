@@ -10,6 +10,9 @@ from apsconnectcli.cluster import (
     read_cluster_certificate,
 )
 
+from apsconnectcli.awsmanager.aws import AWSClient
+from apsconnectcli.awsmanager.ecr import ECRClient
+
 if sys.version_info >= (3,):
     from unittest.mock import patch, MagicMock
 

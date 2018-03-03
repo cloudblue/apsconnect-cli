@@ -7,6 +7,9 @@ from apsconnectcli.apsconnect import APSConnectUtil
 from tests.fakes import FakeK8sApi, FakeData, FakeErrors
 from tests import utils
 
+from apsconnectcli.awsmanager.aws import AWSClient
+from apsconnectcli.awsmanager.ecr import ECRClient
+
 if sys.version_info >= (3,):
     from unittest.mock import patch, mock_open, call, MagicMock
     _BUILTINS_OPEN = 'builtins.open'
