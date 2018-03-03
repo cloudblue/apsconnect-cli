@@ -1,6 +1,7 @@
 import base64
 import os
 import sys
+import json
 from pkg_resources import DistributionNotFound
 from unittest import TestCase
 
@@ -24,6 +25,7 @@ from apsconnectcli.apsconnect import (
     get_latest_version,
     main,
     APSConnectUtil,
+    _create_image_pull_secret,
 )
 
 from apsconnectcli.awsmanager.aws import AWSClient
@@ -225,8 +227,8 @@ class CreateDeploymentBaseTest(TestCase):
     _FAKE_DEL_OPTS = {'no-promt': True, 'recursive': True}
     _EXP_LBL_SEL = 'name={}'.format(_TEST_NAME)
 
-    def _create_test_body(self, name, replicas, image, healthcheck_path):
-        return {
+    def _create_test_body(self, name, replicas, image, healthcheck_path, image_pull_secret):
+        template = {
             'apiVersion': 'extensions/v1beta1',
             'kind': 'Deployment',
             'metadata': {
@@ -299,6 +301,13 @@ class CreateDeploymentBaseTest(TestCase):
                 },
             },
         }
+
+        if image_pull_secret is not None:
+            image_pull_secret_tag = [{'name': image_pull_secret}]
+            template["spec"]["template"]["spec"]['imagePullSecrets'] = image_pull_secret_tag
+
+        return template
+
 
     def _create_fake_core_v1_with_empty_pods(self):
         fake_core_v1 = MagicMock()
@@ -864,3 +873,78 @@ class TestHelpers(TestCase):
 
         self.assertTrue('All is lost' in print_mock.call_args[0][0])
         sys_mock.exit.assert_called_once_with(1)
+
+
+class AuthTokenTest(TestCase):
+    """Tests for get_authorization_token"""
+
+    def get_authorization_token(self, region, aws_ecr_key, aws_ecr_secret, registry_id):
+
+        ecr = ECRClient(region, aws_ecr_key, aws_ecr_secret)
+        auth_response = ecr.get_authorization_token(registry_ids=[registry_id])
+        return auth_response
+
+
+class CreateImagePullSecretTest(TestCase):
+    """Tests for _create_image_pull_secret"""
+
+    def _create_image_pull_secret_dict(self, name, user_name, user_password,
+                                       endpoint, namespace='default'):
+
+        image_pull_secret = 'ips' + name
+
+        auth_password = user_password
+        user_password = str(base64.b64decode(user_password)).split(':')[1]
+
+        secret = {
+            'auths': {
+                endpoint: {
+                    'username': user_name,
+                    'password': user_password,
+                    'email': 'none',
+                    'auth': auth_password,
+                }
+            }
+        }
+
+        secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
+
+        body = {
+            'api_version': 'v1',
+            'data': {
+                '.dockerconfigjson': secret_b64encode,
+            },
+            'kind': 'Secret',
+            'metadata': {
+                'name': image_pull_secret,
+                'namespace': namespace,
+            },
+            'type': 'kubernetes.io/dockerconfigjson',
+        }
+
+        return body
+
+    def _create_image_pull_secret_check(self, name, user_name, user_password, endpoint, namespace=None):
+        fake_api = MagicMock()
+        test_body = self._create_image_pull_secret_dict(name, user_name, user_password, endpoint, namespace)
+
+        if namespace is not None:
+            test_namespace = namespace
+            _create_image_pull_secret(name=name,
+                                      user_name=user_name,
+                                      user_password=user_password,
+                                      endpoint=endpoint,
+                                      api=fake_api,
+                                      namespace=test_namespace)
+        else:
+            test_namespace = FakeData.DEFAULT_NAMESPACE
+            _create_image_pull_secret(name=name,
+                                      user_name=user_name,
+                                      user_password=user_password,
+                                      endpoint=endpoint,
+                                      api=fake_api)
+
+        fake_api.delete_namespaced_secret.assert_not_called()
+        fake_api.create_namespaced_secret.assert_called_once_with(namespace=test_namespace,
+                                                                  body=test_body)
+
