@@ -354,7 +354,7 @@ class CreateDeploymentBaseTest(TestCase):
         dummy_str = '1q2w3e4r5t!Q@W#E$R%T^Y'
         replicas_count = 2
         test_image = _to_bytes(dummy_str)
-        test_body = self._create_test_body(self._TEST_NAME, replicas_count, test_image, '/')
+        test_body = self._create_test_body(self._TEST_NAME, replicas_count, test_image, '/', None)
 
         _create_deployment(name=self._TEST_NAME,
                            image=test_image,
@@ -873,16 +873,6 @@ class TestHelpers(TestCase):
 
         self.assertTrue('All is lost' in print_mock.call_args[0][0])
         sys_mock.exit.assert_called_once_with(1)
-
-
-class AuthTokenTest(TestCase):
-    """Tests for get_authorization_token"""
-
-    def get_authorization_token(self, region, aws_ecr_key, aws_ecr_secret, registry_id):
-
-        ecr = ECRClient(region, aws_ecr_key, aws_ecr_secret)
-        auth_response = ecr.get_authorization_token(registry_ids=[registry_id])
-        return auth_response
 
 
 class CreateImagePullSecretTest(TestCase):

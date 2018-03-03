@@ -32,11 +32,9 @@ def init_mocks(func):
     @patch('apsconnectcli.apsconnect._create_ingress')
     @patch('apsconnectcli.apsconnect._polling_service_access')
     @patch('apsconnectcli.apsconnect._check_connector_backend_access')
-    @patch('apsconnectcli.awsmanager.ecr.get_authorization_token')
     @patch('apsconnectcli.apsconnect._create_image_pull_secret')
     def mocked_fn(self,
                   create_image_pull_secret,
-                  get_authorization_token,
                   check_connector_backend_access,
                   polling_service_access,
                   create_ingress,
@@ -192,14 +190,6 @@ class InstallBackendTest(TestCase):
             FakeErrors.FAKE_ERR_MSG)
 
         exp_output = 'Check connector backend host error: {}'.format(FakeErrors.FAKE_ERR_MSG)
-        self._check_internal_fn_causes_systemexit(mocks_dict, exp_output)
-
-    @init_mocks
-    def test_when_get_authorization_token_is_failed(self, mocks_dict):
-        mocks_dict['get_authorization_token'].side_effect = utils.create_fn_raising_error(
-            FakeErrors.FAKE_ERR_MSG)
-
-        exp_output = 'Check get authorization token error: {}'.format(FakeErrors.FAKE_ERR_MSG)
         self._check_internal_fn_causes_systemexit(mocks_dict, exp_output)
 
     @init_mocks
