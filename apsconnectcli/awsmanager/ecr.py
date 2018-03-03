@@ -1,7 +1,7 @@
 import json
 import logging
 
-from aws import AWSClient
+from apsconnectcli.awsmanager.aws import AWSClient
 
 logger = logging.getLogger(__name__)
 
