@@ -105,6 +105,7 @@ class InstallBackendTest(TestCase):
             self._TEST_NAME,
             '',
             mocks_dict['extensions_api'](),
+            None,
             path,
             2,
             FakeData.DEFAULT_NAMESPACE,

@@ -359,6 +359,7 @@ class CreateDeploymentBaseTest(TestCase):
         _create_deployment(name=self._TEST_NAME,
                            image=test_image,
                            api=fake_ext_v1,
+                           image_pull_secret=None,
                            core_api=fake_core_v1,
                            force=is_force)
 
@@ -541,7 +542,7 @@ class CreateDeploymentPollingTest(TestCase):
         with patch('apsconnectcli.apsconnect.poll_deployment') as poll_deployment_mock, \
                 patch('apsconnectcli.apsconnect.sys') as sys_mock:
             poll_deployment_mock.return_value = AvailabilityCheckResult(True, 'OK')
-            _create_deployment('name', 'image', api)
+            _create_deployment('name', 'image', api, None)
             self.assertTrue(poll_deployment_mock.called)
             sys_mock.exit.assert_not_called()
 
@@ -550,7 +551,7 @@ class CreateDeploymentPollingTest(TestCase):
         with patch('apsconnectcli.apsconnect.poll_deployment') as poll_deployment_mock, \
                 patch('apsconnectcli.apsconnect.sys') as sys_mock:
             poll_deployment_mock.return_value = AvailabilityCheckResult(False, 'Error')
-            _create_deployment('name', 'image', api)
+            _create_deployment('name', 'image', api, None)
             self.assertTrue(poll_deployment_mock.called)
             sys_mock.exit.assert_called_with(1)
 
