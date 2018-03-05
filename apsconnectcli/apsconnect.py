@@ -261,7 +261,7 @@ class APSConnectUtil:
             user_name = "AWS"
 
             ecr = ECRClient(region, aws_ecr_key, aws_ecr_secret)
-            auth_response = ecr.get_authorization_token([registry_id])
+            auth_response = ecr.get_auth_token(registry_id)
             user_password = str(auth_response['authorizationData'][0]['authorizationToken'])
             endpoint = str(auth_response['authorizationData'][0]['proxyEndpoint'])
             endpoint = str.replace(endpoint, 'https://', '')

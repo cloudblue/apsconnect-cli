@@ -28,9 +28,6 @@ from apsconnectcli.apsconnect import (
     _create_image_pull_secret,
 )
 
-from apsconnectcli.awsmanager.aws import AWSClient
-from apsconnectcli.awsmanager.ecr import ECRClient
-
 from apsconnectcli.cluster import AvailabilityCheckResult
 
 from tests.fakes import FakeData, FakeK8sApi
