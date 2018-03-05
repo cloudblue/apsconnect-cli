@@ -11,6 +11,8 @@ import base64
 import warnings
 import zipfile
 import pkg_resources
+
+from apsconnectcli.awsmanager.ecr import ECRClient
 from collections import namedtuple
 from future.moves.urllib.parse import urlparse
 from shutil import copyfile
@@ -30,7 +32,6 @@ from kubernetes.client.rest import ApiException
 
 from apsconnectcli.action_logger import Logger
 from apsconnectcli.cluster import read_cluster_certificate, poll_deployment
-from apsconnectcli.awsmanager.ecr import ECRClient
 
 if sys.version_info >= (3,):
     import tempfile
@@ -265,7 +266,7 @@ class APSConnectUtil:
             endpoint = str(auth_response['authorizationData'][0]['proxyEndpoint'])
             endpoint = str.replace(endpoint, 'https://', '')
 
-            if user_name and user_password:
+            if user_password and endpoint:
                 try:
                     image_pull_secret = _create_image_pull_secret(name, user_name, user_password,
                                                                   endpoint, core_v1, namespace)
