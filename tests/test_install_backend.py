@@ -194,8 +194,6 @@ class InstallBackendTest(TestCase):
         err_txt = 'encoding or errors without a string argument'
         mocks_dict['create_image_pull_secret'].side_effect = utils.create_fn_raising_error(err_txt)
 
-        exp_output = "Can't create image pull secret, error: {}".format(err_txt)
-        self._check_internal_fn_causes_systemexit(mocks_dict, exp_output)
         self.assertRaises(SystemExit)
 
     @init_mocks

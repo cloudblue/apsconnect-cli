@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import boto3
 import json
 import os
 import re
@@ -12,7 +13,6 @@ import warnings
 import zipfile
 import pkg_resources
 
-from apsconnectcli.awsmanager.ecr import ECRClient
 from collections import namedtuple
 from future.moves.urllib.parse import urlparse
 from shutil import copyfile
@@ -260,8 +260,15 @@ class APSConnectUtil:
 
             user_name = "AWS"
 
-            ecr = ECRClient(region, aws_ecr_key, aws_ecr_secret)
-            auth_response = ecr.get_auth_token(registry_id)
+            session = boto3.session.Session()
+            aws_client = session.client(
+                service_name='ecr',
+                region_name=region,
+                aws_access_key_id=aws_ecr_key,
+                aws_secret_access_key=aws_ecr_secret,
+            )
+            auth_response = aws_client.get_authorization_token(registryIds=[registry_id, ])
+
             user_password = str(auth_response['authorizationData'][0]['authorizationToken'])
             endpoint = str(auth_response['authorizationData'][0]['proxyEndpoint'])
             endpoint = str.replace(endpoint, 'https://', '')
