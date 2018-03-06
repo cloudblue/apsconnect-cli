@@ -87,7 +87,9 @@ class InstallBackendTest(TestCase):
                                   name=self._TEST_NAME,
                                   image='',
                                   config_file=FakeData.CONFIG_PATH,
-                                  hostname='localhost')
+                                  hostname='localhost',
+                                  aws_ecr_key=None,
+                                  aws_ecr_secret=None)
                 mock_file.assert_has_calls([call(FakeData.CONFIG_PATH)])
                 mock_print.assert_called_with(expected_err_msg)
 
@@ -194,7 +196,7 @@ class InstallBackendTest(TestCase):
         err_txt = 'encoding or errors without a string argument'
         mocks_dict['create_image_pull_secret'].side_effect = utils.create_fn_raising_error(err_txt)
 
-        exp_output = "Can't create create image pull secret, error: {}".format(err_txt)
+        exp_output = "Can't create image pull secret, error: {}".format(err_txt)
         self._check_internal_fn_causes_systemexit(mocks_dict, exp_output)
 
     @init_mocks
