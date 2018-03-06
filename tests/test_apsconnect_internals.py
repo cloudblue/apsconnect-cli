@@ -876,7 +876,7 @@ class TestHelpers(TestCase):
 class CreateImagePullSecretTest(TestCase):
     """Tests for _create_image_pull_secret"""
 
-    def _create_image_pull_secret_dict(self, name, user_name, user_password,
+    def _create_image_pull_secret_body(self, name, user_name, user_password,
                                        endpoint, namespace='default'):
 
         image_pull_secret = 'ips' + name
@@ -914,7 +914,7 @@ class CreateImagePullSecretTest(TestCase):
 
     def _create_image_pull_secret_check(self, name, user_name, user_password, endpoint, namespace=None):
         fake_api = MagicMock()
-        test_body = self._create_image_pull_secret_dict(name, user_name, user_password, endpoint, namespace)
+        test_body = self._create_image_pull_secret_body(name, user_name, user_password, endpoint, namespace)
 
         if namespace is not None:
             test_namespace = namespace
