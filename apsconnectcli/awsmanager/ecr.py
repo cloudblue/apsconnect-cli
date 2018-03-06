@@ -24,11 +24,11 @@ class AWSClient(object):
 
 class ECRClient(AWSClient):
     """Client for ECR operations"""
-    serviceName = 'ecr'
+    service_name = 'ecr'
 
     def __init__(self, region, key_id, access_key):
         super(ECRClient, self) \
-            .__init__(self.serviceName, region, key_id, access_key)
+            .__init__(self.service_name, region, key_id, access_key)
 
     def get_auth_token(self, registry_id=None):
         response = self.client.get_authorization_token(registryIds=[registry_id, ])

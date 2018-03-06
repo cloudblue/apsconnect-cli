@@ -266,14 +266,17 @@ class APSConnectUtil:
             endpoint = str(auth_response['authorizationData'][0]['proxyEndpoint'])
             endpoint = str.replace(endpoint, 'https://', '')
 
-            if user_password and endpoint:
-                try:
-                    image_pull_secret = _create_image_pull_secret(name, user_name, user_password,
-                                                                  endpoint, core_v1, namespace)
-                    print("Create image pull secret [ok]")
-                except Exception as e:
-                    print("Can't create image pull secret in cluster, error: {}".format(e))
-                    sys.exit(1)
+            if user_password is None or endpoint is None:
+                print("Could not find authorization data from aws")
+                sys.exit(1)
+
+            try:
+                image_pull_secret = _create_image_pull_secret(name, user_name, user_password,
+                                                              endpoint, core_v1, namespace)
+                print("Create image pull secret [ok]")
+            except Exception as e:
+                print("Can't create image pull secret in cluster, error: {}".format(e))
+                sys.exit(1)
 
         try:
             _create_deployment(name, image, ext_v1, image_pull_secret, healthcheck_path, replicas,
@@ -1226,7 +1229,8 @@ def get_latest_version():
 def _create_image_pull_secret(name, user_name, user_password, endpoint,
                               api, namespace='default', force=False):
     try:
-        image_pull_secret = 'ips' + name
+
+        image_pull_secret = '{0}{1}'.format('ips', name)
 
         auth_password = user_password
         user_password = str(base64.b64decode(user_password)).split(':')[1]
@@ -1243,8 +1247,6 @@ def _create_image_pull_secret(name, user_name, user_password, endpoint,
         }
 
         secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
-
-        print(secret_b64encode)
 
         body = {
             'api_version': 'v1',

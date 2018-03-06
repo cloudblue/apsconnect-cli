@@ -912,7 +912,12 @@ class CreateImagePullSecretTest(TestCase):
 
         return body
 
-    def _create_image_pull_secret_check(self, name, user_name, user_password, endpoint, namespace=None):
+    def test_create_image_pull_secret_check(self, namespace='default'):
+        name = 'test'
+        user_name = 'AWS'
+        user_password = 'QVdTOnBhc3N3b3Jk'
+        endpoint = '810347220345.dkr.ecr.us-east-1.amazonaws.com/dropbox-business_9368:latest'
+
         fake_api = MagicMock()
         test_body = self._create_image_pull_secret_body(name, user_name, user_password, endpoint, namespace)
 
