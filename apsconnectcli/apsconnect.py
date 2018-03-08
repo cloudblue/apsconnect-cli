@@ -257,7 +257,8 @@ class APSConnectUtil:
                                                               core_v1, namespace)
 
         try:
-            _create_deployment(name, image, ext_v1, image_pull_secret_key, healthcheck_path, replicas,
+            _create_deployment(name, image, ext_v1, image_pull_secret_key,
+                               healthcheck_path, replicas,
                                namespace, force, core_api=core_v1)
             print("Create deployment [ok]")
         except Exception as e:
