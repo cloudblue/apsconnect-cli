@@ -301,7 +301,7 @@ class CreateDeploymentBaseTest(TestCase):
 
         if image_pull_secret is not None:
             image_pull_secret_tag = [{'name': image_pull_secret}]
-            template["spec"]["template"]["spec"]['imagePullSecrets'] = image_pull_secret_tag
+            template['spec']['template']['spec']['imagePullSecrets'] = image_pull_secret_tag
 
         return template
 
