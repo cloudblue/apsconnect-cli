@@ -6,4 +6,5 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     ln -s `which pip3` /usr/local/bin/pip
 fi
 
+pip install --upgrade setuptools pip
 pip3 install --upgrade setuptools pip
