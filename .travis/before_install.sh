@@ -2,7 +2,7 @@
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     brew update
-    brew install python3
+    brew upgrade python
     ln -s `which pip3` /usr/local/bin/pip
 fi
 
