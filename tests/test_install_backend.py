@@ -55,6 +55,8 @@ class InstallBackendTest(TestCase):
     """Tests for apsconnect.install_backend"""
 
     _TEST_NAME = 'TEST NAME'
+    _TEST_AWS_KEY = 'testkey'
+    _TEST_AWS_SECRET = 'testsecret'
 
     def _read_valid_json(self):
         return mock_open(read_data=FakeData.VALID_JSON)
@@ -67,7 +69,9 @@ class InstallBackendTest(TestCase):
                               name=self._TEST_NAME,
                               image='',
                               config_file=FakeData.CONFIG_PATH,
-                              hostname='localhost')
+                              hostname='localhost',
+                              aws_ecr_key=self._TEST_AWS_KEY,
+                              aws_ecr_secret=self._TEST_AWS_SECRET)
             mock_file.assert_has_calls([call(FakeData.CONFIG_PATH)])
 
     def _check_internal_fn_causes_systemexit(self,
@@ -87,7 +91,9 @@ class InstallBackendTest(TestCase):
                                   name=self._TEST_NAME,
                                   image='',
                                   config_file=FakeData.CONFIG_PATH,
-                                  hostname='localhost')
+                                  hostname='localhost',
+                                  aws_ecr_key=self._TEST_AWS_KEY,
+                                  aws_ecr_secret=self._TEST_AWS_SECRET)
                 mock_file.assert_has_calls([call(FakeData.CONFIG_PATH)])
                 mock_print.assert_called_with(expected_err_msg)
 
@@ -122,7 +128,9 @@ class InstallBackendTest(TestCase):
                                   name=self._TEST_NAME,
                                   image='',
                                   config_file=FakeData.CONFIG_PATH,
-                                  hostname='localhost')
+                                  hostname='localhost',
+                                  aws_ecr_key=self._TEST_AWS_KEY,
+                                  aws_ecr_secret=self._TEST_AWS_SECRET)
                 err_msg = "Unable to read config file, error: {}".format(file_read_err_msg)
                 mock_print.assert_called_with(err_msg)
 
