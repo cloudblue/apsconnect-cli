@@ -252,7 +252,8 @@ class APSConnectUtil:
             print("Can't create config in cluster, error: {}".format(e))
             sys.exit(1)
 
-        if (aws_ecr_key is not None and aws_ecr_secret is None) or (aws_ecr_key is None and aws_ecr_secret is not None):
+        if (aws_ecr_key is not None and aws_ecr_secret is None) or \
+                (aws_ecr_key is None and aws_ecr_secret is not None):
             print("Please provide AWS ECR key and AWS ECR secret both or none")
             sys.exit(1)
 
@@ -1235,8 +1236,9 @@ def _create_image_pull_secret_key(name, image, aws_ecr_key, aws_ecr_secret,
             user_password = str(user_password)
             endpoint = str(endpoint.replace('https://', ''))
 
-            image_pull_secret = _create_image_pull_secret(name, user_name, user_password,
-                                                              endpoint, core_v1, namespace, force)
+            image_pull_secret = _create_image_pull_secret(name, user_name,
+                                                          user_password, endpoint,
+                                                          core_v1, namespace, force)
             print("Create image pull secret [ok]")
             return image_pull_secret
         except Exception as e:
