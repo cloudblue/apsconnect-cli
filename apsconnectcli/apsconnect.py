@@ -252,9 +252,13 @@ class APSConnectUtil:
             print("Can't create config in cluster, error: {}".format(e))
             sys.exit(1)
 
+        if (aws_ecr_key is not None and aws_ecr_secret is None) or (aws_ecr_key is None and aws_ecr_secret is not None):
+            print("Please provide AWS ECR key and AWS ECR secret both or none")
+            sys.exit(1)
+
         image_pull_secret_key = _create_image_pull_secret_key(name, image,
                                                               aws_ecr_key, aws_ecr_secret,
-                                                              core_v1, namespace)
+                                                              core_v1, namespace, force)
 
         try:
             _create_deployment(name, image, ext_v1, image_pull_secret_key,
@@ -1206,10 +1210,10 @@ def get_latest_version():
 
 
 def _create_image_pull_secret_key(name, image, aws_ecr_key, aws_ecr_secret,
-                                  core_v1, namespace='default'):
+                                  core_v1, namespace='default', force=False):
 
-    image_pull_secret = None
-    if aws_ecr_key and aws_ecr_secret:
+    aws_identifier = 'amazonaws.com'
+    if aws_identifier in image:
         registry_id = _get_info_from_image(image)[0]
         region = _get_info_from_image(image)[3]
         user_name = 'AWS'
@@ -1227,22 +1231,19 @@ def _create_image_pull_secret_key(name, image, aws_ecr_key, aws_ecr_secret,
         user_password = auth_data['authorizationToken']
         endpoint = auth_data['proxyEndpoint']
 
-        if user_password is None or endpoint is None:
-            print("Could not find authorization data from aws")
-            sys.exit(1)
-
         try:
             user_password = str(user_password)
             endpoint = str(endpoint.replace('https://', ''))
 
             image_pull_secret = _create_image_pull_secret(name, user_name, user_password,
-                                                          endpoint, core_v1, namespace)
+                                                              endpoint, core_v1, namespace, force)
             print("Create image pull secret [ok]")
+            return image_pull_secret
         except Exception as e:
             print("Can't create image pull secret in cluster, error: {}".format(e))
             sys.exit(1)
-
-    return image_pull_secret
+    else:
+        return None
 
 
 def _create_image_pull_secret(name, user_name, user_password, endpoint,
@@ -1297,7 +1298,15 @@ def _create_image_pull_secret(name, user_name, user_password, endpoint,
 def _get_info_from_image(image):
 
     try:
+        if not image:
+            raise Exception("Image URL is not provided")
+
         image_data = image.split('.')
+
+        if not image_data[0]:
+            raise Exception("Unable to extract registry id from image URL")
+        elif not image_data[3]:
+            raise Exception("Unable to extract region from image URL")
 
         print("Found registry id {0} and region {1} [ok]".format(image_data[0], image_data[3]))
 
