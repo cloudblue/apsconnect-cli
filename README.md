@@ -152,3 +152,12 @@ Disable mode with `--disable`.
 ⇒ apsconnect aps-devel-mode --disable
 APS Development mode DISABLED.
 ```
+
+#### Limitations
+
+1. Amazon ECR provides an authorization token to authenticate an Amazon ECR registry which is used to
+   create image pull secret key. As the token is valid for 12 hours, there might be a problem with pod
+   recreation after this time with this K8S secret key.
+
+2. To solve the #1 issue, user can create a Kubernetes CronJob that will renew AWS Registry pull
+   credentials. The CronJob will run a Service Account which will delete and update secrets.
