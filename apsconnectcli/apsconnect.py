@@ -252,9 +252,8 @@ class APSConnectUtil:
             print("Can't create config in cluster, error: {}".format(e))
             sys.exit(1)
 
-        if (aws_ecr_key is not None and aws_ecr_secret is None) or \
-                (aws_ecr_key is None and aws_ecr_secret is not None):
-            print("Please provide AWS ECR key and AWS ECR secret both or none")
+        if (aws_ecr_key and not aws_ecr_secret) or (aws_ecr_secret and not aws_ecr_key):
+            print("For ECR registry, make sure you have provided both key and secret")
             sys.exit(1)
 
         image_pull_secret_key = _create_image_pull_secret_key(name, image,
@@ -1219,15 +1218,8 @@ def _create_image_pull_secret_key(name, image, aws_ecr_key, aws_ecr_secret,
         region = _get_info_from_image(image)[3]
         user_name = 'AWS'
 
-        session = boto3.session.Session()
-        aws_client = session.client(
-            service_name='ecr',
-            region_name=region,
-            aws_access_key_id=aws_ecr_key,
-            aws_secret_access_key=aws_ecr_secret,
-        )
+        auth_response = _get_authorization_token(aws_ecr_key, aws_ecr_secret, region, registry_id)
 
-        auth_response = aws_client.get_authorization_token(registryIds=[registry_id, ])
         auth_data = auth_response['authorizationData'][0]
         user_password = auth_data['authorizationToken']
         endpoint = auth_data['proxyEndpoint']
@@ -1317,6 +1309,24 @@ def _get_info_from_image(image):
         sys.exit(1)
 
     return image_data
+
+
+def _get_authorization_token(aws_ecr_key, aws_ecr_secret, region, registry_id):
+    try:
+        session = boto3.session.Session()
+        aws_client = session.client(
+            service_name='ecr',
+            region_name=region,
+            aws_access_key_id=aws_ecr_key,
+            aws_secret_access_key=aws_ecr_secret,
+        )
+
+        auth_response = aws_client.get_authorization_token(registryIds=[registry_id, ])
+        return auth_response
+
+    except Exception as e:
+        print("Unable to get autorization token, error: {}".format(e))
+        sys.exit(1)
 
 
 def main():
