@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import boto3
 import json
 import os
 import re
@@ -11,6 +12,7 @@ import base64
 import warnings
 import zipfile
 import pkg_resources
+
 from collections import namedtuple
 from future.moves.urllib.parse import urlparse
 from shutil import copyfile
@@ -212,8 +214,8 @@ class APSConnectUtil:
                   .format(GITHUB_RELEASES_PAGE))
 
     def install_backend(self, name, image, config_file, hostname, healthcheck_path=None,
-                        root_path='/', namespace='default', replicas=2,
-                        tls_secret_name=None, force=False):
+                        aws_ecr_key=None, aws_ecr_secret=None, root_path='/', namespace='default',
+                        replicas=2, tls_secret_name=None, force=False):
         """ Install connector-backend in the k8s cluster"""
         if healthcheck_path:
             print("WARNING --healthcheck-path is deprecated and will be dropped in future releases."
@@ -250,8 +252,17 @@ class APSConnectUtil:
             print("Can't create config in cluster, error: {}".format(e))
             sys.exit(1)
 
+        if (aws_ecr_key and not aws_ecr_secret) or (aws_ecr_secret and not aws_ecr_key):
+            print("For ECR registry, make sure you have provided both key and secret")
+            sys.exit(1)
+
+        image_pull_secret_key = _create_image_pull_secret_key(name, image,
+                                                              aws_ecr_key, aws_ecr_secret,
+                                                              core_v1, namespace, force)
+
         try:
-            _create_deployment(name, image, ext_v1, healthcheck_path, replicas,
+            _create_deployment(name, image, ext_v1, image_pull_secret_key,
+                               healthcheck_path, replicas,
                                namespace, force, core_api=core_v1)
             print("Create deployment [ok]")
         except Exception as e:
@@ -754,7 +765,7 @@ def _delete_secret(name, api, namespace):
             raise
 
 
-def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
+def _create_deployment(name, image, api, image_pull_secret=None, healthcheck_path='/', replicas=2,
                        namespace='default', force=False, core_api=None):
     template = {
         'apiVersion': 'extensions/v1beta1',
@@ -830,6 +841,10 @@ def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
             },
         },
     }
+
+    if image_pull_secret is not None:
+        image_pull_secret_tag = [{'name': image_pull_secret}]
+        template['spec']['template']['spec']['imagePullSecrets'] = image_pull_secret_tag
 
     if force:
         _delete_deployment(name, api=api, namespace=namespace, core_api=core_api)
@@ -997,7 +1012,8 @@ def _polling_service_access(name, ext_v1, namespace, timeout=120):
 
             sys.stdout.write('.')
             sys.stdout.flush()
-        except:
+        except Exception as e:
+            print("Error: {}".format(e))
             raise
 
         if datetime.now() > max_time:
@@ -1173,7 +1189,8 @@ def bin_version():
     try:
         with open(os.path.join(sys._MEIPASS, 'VERSION')) as f:
             return f.read()
-    except:
+    except Exception as e:
+        print("Error: {}".format(e))
         return None
 
 
@@ -1187,8 +1204,129 @@ def get_version():
 def get_latest_version():
     try:
         return get(LATEST_RELEASE_URL, timeout=REQUEST_TIMEOUT).json()['tag_name'][1:]
-    except:
+    except Exception as e:
+        print("Error: {}".format(e))
         return None
+
+
+def _create_image_pull_secret_key(name, image, aws_ecr_key, aws_ecr_secret,
+                                  core_v1, namespace='default', force=False):
+
+    aws_identifier = 'amazonaws.com'
+    if aws_identifier in image:
+        registry_id = _get_info_from_image(image)[0]
+        region = _get_info_from_image(image)[3]
+        user_name = 'AWS'
+
+        auth_response = _get_authorization_token(aws_ecr_key, aws_ecr_secret, region, registry_id)
+
+        auth_data = auth_response['authorizationData'][0]
+        user_password = auth_data['authorizationToken']
+        endpoint = auth_data['proxyEndpoint']
+
+        try:
+            user_password = str(user_password)
+            endpoint = str(endpoint.replace('https://', ''))
+
+            image_pull_secret = _create_image_pull_secret(name, user_name,
+                                                          user_password, endpoint,
+                                                          core_v1, namespace, force)
+            print("Create image pull secret [ok]")
+            return image_pull_secret
+        except Exception as e:
+            print("Can't create image pull secret in cluster, error: {}".format(e))
+            sys.exit(1)
+    else:
+        return None
+
+
+def _create_image_pull_secret(name, user_name, user_password, endpoint,
+                              api, namespace='default', force=False):
+    try:
+
+        image_pull_secret = '{0}{1}'.format('ips', name)
+
+        auth_password = user_password
+        user_password = str(base64.b64decode(user_password)).split(':')[1]
+
+        secret = {
+            'auths': {
+                endpoint: {
+                    'username': user_name,
+                    'password': user_password,
+                    'email': 'none',
+                    'auth': auth_password,
+                }
+            }
+        }
+
+        secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
+
+        body = {
+            'api_version': 'v1',
+            'data': {
+                '.dockerconfigjson': secret_b64encode,
+            },
+            'kind': 'Secret',
+            'metadata': {
+                'name': image_pull_secret,
+                'namespace': namespace,
+            },
+            'type': 'kubernetes.io/dockerconfigjson',
+        }
+
+        if force:
+            _delete_secret(image_pull_secret, api, namespace)
+
+        api.create_namespaced_secret(
+            namespace=namespace,
+            body=body,
+        )
+    except Exception as e:
+        print("Error: {}".format(e))
+        raise e
+
+    return image_pull_secret
+
+
+def _get_info_from_image(image):
+
+    try:
+        if not image:
+            raise Exception("Image URL is not provided")
+
+        image_data = image.split('.')
+
+        if not image_data[0]:
+            raise Exception("Unable to extract registry id from image URL")
+        elif not image_data[3]:
+            raise Exception("Unable to extract region from image URL")
+
+        print("Found registry id {0} and region {1} [ok]".format(image_data[0], image_data[3]))
+
+    except Exception as e:
+        print("Unable to get region and registry id, error: {}".format(e))
+        sys.exit(1)
+
+    return image_data
+
+
+def _get_authorization_token(aws_ecr_key, aws_ecr_secret, region, registry_id):
+    try:
+        session = boto3.session.Session()
+        aws_client = session.client(
+            service_name='ecr',
+            region_name=region,
+            aws_access_key_id=aws_ecr_key,
+            aws_secret_access_key=aws_ecr_secret,
+        )
+
+        auth_response = aws_client.get_authorization_token(registryIds=[registry_id, ])
+        return auth_response
+
+    except Exception as e:
+        print("Unable to get autorization token, error: {}".format(e))
+        sys.exit(1)
 
 
 def main():

@@ -67,6 +67,7 @@ Config saved [/Users/allexx/.aps_config]
 
 ```
 apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE --hostname HOSTNAME \
+                          [--aws-ecr-key AWS_ECR_KEY] [--aws-ecr-secret AWS_ECR_SECRET] \
                           [--healthcheck-path HEALTHCHECK_PATH] [--root-path ROOT_PATH] \
                           [--namespace NAMESPACE] [--replicas REPLICAS] [--tls-secret-name TLS_SECRET_NAME] \
                           [--force FORCE]
@@ -151,3 +152,12 @@ Disable mode with `--disable`.
 ⇒ apsconnect aps-devel-mode --disable
 APS Development mode DISABLED.
 ```
+
+#### Limitations
+
+Amazon ECR provides an authorization token to authenticate an Amazon ECR registry which is used to
+create image pull secret key. As the token is valid for 12 hours, there might be a problem with pod
+recreation after this time with this K8S secret key.
+
+To solve this issue, user can create a Kubernetes CronJob that will renew AWS Registry pull
+credentials. The CronJob will run a Service Account which will update secrets.

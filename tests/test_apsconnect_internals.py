@@ -1,6 +1,7 @@
 import base64
 import os
 import sys
+import json
 from pkg_resources import DistributionNotFound
 from unittest import TestCase
 
@@ -24,6 +25,9 @@ from apsconnectcli.apsconnect import (
     get_latest_version,
     main,
     APSConnectUtil,
+    _create_image_pull_secret,
+    _create_image_pull_secret_key,
+    _get_info_from_image
 )
 
 from apsconnectcli.cluster import AvailabilityCheckResult
@@ -222,8 +226,8 @@ class CreateDeploymentBaseTest(TestCase):
     _FAKE_DEL_OPTS = {'no-promt': True, 'recursive': True}
     _EXP_LBL_SEL = 'name={}'.format(_TEST_NAME)
 
-    def _create_test_body(self, name, replicas, image, healthcheck_path):
-        return {
+    def _create_test_body(self, name, replicas, image, healthcheck_path, image_pull_secret):
+        template = {
             'apiVersion': 'extensions/v1beta1',
             'kind': 'Deployment',
             'metadata': {
@@ -297,6 +301,13 @@ class CreateDeploymentBaseTest(TestCase):
             },
         }
 
+        if image_pull_secret is not None:
+            image_pull_secret_tag = [{'name': image_pull_secret}]
+            template['spec']['template']['spec']['imagePullSecrets'] = image_pull_secret_tag
+
+        return template
+
+
     def _create_fake_core_v1_with_empty_pods(self):
         fake_core_v1 = MagicMock()
         fake_pods = MagicMock()
@@ -342,11 +353,12 @@ class CreateDeploymentBaseTest(TestCase):
         dummy_str = '1q2w3e4r5t!Q@W#E$R%T^Y'
         replicas_count = 2
         test_image = _to_bytes(dummy_str)
-        test_body = self._create_test_body(self._TEST_NAME, replicas_count, test_image, '/')
+        test_body = self._create_test_body(self._TEST_NAME, replicas_count, test_image, '/', None)
 
         _create_deployment(name=self._TEST_NAME,
                            image=test_image,
                            api=fake_ext_v1,
+                           image_pull_secret=None,
                            core_api=fake_core_v1,
                            force=is_force)
 
@@ -529,7 +541,7 @@ class CreateDeploymentPollingTest(TestCase):
         with patch('apsconnectcli.apsconnect.poll_deployment') as poll_deployment_mock, \
                 patch('apsconnectcli.apsconnect.sys') as sys_mock:
             poll_deployment_mock.return_value = AvailabilityCheckResult(True, 'OK')
-            _create_deployment('name', 'image', api)
+            _create_deployment('name', 'image', api, None)
             self.assertTrue(poll_deployment_mock.called)
             sys_mock.exit.assert_not_called()
 
@@ -538,7 +550,7 @@ class CreateDeploymentPollingTest(TestCase):
         with patch('apsconnectcli.apsconnect.poll_deployment') as poll_deployment_mock, \
                 patch('apsconnectcli.apsconnect.sys') as sys_mock:
             poll_deployment_mock.return_value = AvailabilityCheckResult(False, 'Error')
-            _create_deployment('name', 'image', api)
+            _create_deployment('name', 'image', api, None)
             self.assertTrue(poll_deployment_mock.called)
             sys_mock.exit.assert_called_with(1)
 
@@ -861,3 +873,106 @@ class TestHelpers(TestCase):
 
         self.assertTrue('All is lost' in print_mock.call_args[0][0])
         sys_mock.exit.assert_called_once_with(1)
+
+
+class CreateImagePullSecretTest(TestCase):
+    """Tests for _create_image_pull_secret"""
+
+    def _create_image_pull_secret_body(self, name, user_name, user_password,
+                                       endpoint, namespace='default'):
+
+        image_pull_secret = 'ips' + name
+
+        auth_password = user_password
+        user_password = str(base64.b64decode(user_password)).split(':')[1]
+
+        secret = {
+            'auths': {
+                endpoint: {
+                    'username': user_name,
+                    'password': user_password,
+                    'email': 'none',
+                    'auth': auth_password,
+                }
+            }
+        }
+
+        secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
+
+        body = {
+            'api_version': 'v1',
+            'data': {
+                '.dockerconfigjson': secret_b64encode,
+            },
+            'kind': 'Secret',
+            'metadata': {
+                'name': image_pull_secret,
+                'namespace': namespace,
+            },
+            'type': 'kubernetes.io/dockerconfigjson',
+        }
+
+        return body
+
+    def test_create_image_pull_secret(self, namespace='default'):
+        name = 'test'
+        user_name = 'test'
+        user_password = 'QVdTOnBhc3N3b3Jk'
+        endpoint = '1234567890.dkr.ecr.region-1.amazonaws.com/test-repo:latest'
+
+        fake_api = MagicMock()
+        test_body = self._create_image_pull_secret_body(name, user_name, user_password, endpoint, namespace)
+
+        if namespace is not None:
+            test_namespace = namespace
+            _create_image_pull_secret(name=name,
+                                      user_name=user_name,
+                                      user_password=user_password,
+                                      endpoint=endpoint,
+                                      api=fake_api,
+                                      namespace=test_namespace)
+        else:
+            test_namespace = FakeData.DEFAULT_NAMESPACE
+            _create_image_pull_secret(name=name,
+                                      user_name=user_name,
+                                      user_password=user_password,
+                                      endpoint=endpoint,
+                                      api=fake_api)
+
+        fake_api.delete_namespaced_secret.assert_not_called()
+        fake_api.create_namespaced_secret.assert_called_once_with(namespace=test_namespace,
+                                                                  body=test_body)
+
+    def test_create_image_pull_secret_key(self, namespace='default'):
+        name = 'test'
+        image = '123.dkr.ecr.region-1.amazonaws.com/test:latest'
+        aws_ecr_key = 'QVdTOnBhc3N3b3Jk'
+        aws_ecr_secret = 'abcdefg++hij'
+        auth_response = {
+                           "authorizationData": [
+                              {
+                                 "authorizationToken": "dXNlcm5hbWU6cGFzc3dvcmQ =",
+                                 "expiresAt": "",
+                                 "proxyEndpoint": image
+                              }
+                           ]
+                        }
+
+        fake_api = MagicMock()
+        with patch('apsconnectcli.apsconnect._get_authorization_token') as mock_auth,\
+            patch('apsconnectcli.apsconnect._create_image_pull_secret') as image_secret, \
+                patch('apsconnectcli.apsconnect.boto3'):
+            mock_auth.return_value = auth_response
+            image_secret.return_value = 'ipstestkey'
+
+            _create_image_pull_secret_key(name=name,
+                                          image=image,
+                                          aws_ecr_key=aws_ecr_key,
+                                          aws_ecr_secret=aws_ecr_secret,
+                                          core_v1=fake_api,
+                                          namespace=namespace)
+
+    def test_get_info_from_image(self):
+        image = '1234567890.dkr.ecr.region-1.amazonaws.com/test-repo:latest'
+
+        _get_info_from_image (image)
