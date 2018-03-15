@@ -948,13 +948,10 @@ class CreateImagePullSecretTest(TestCase):
         image = '123.dkr.ecr.region-1.amazonaws.com/test:latest'
         aws_ecr_key = 'QVdTOnBhc3N3b3Jk'
         aws_ecr_secret = 'abcdefg++hij'
-
         auth_response = {
                            "authorizationData": [
                               {
-                                 "authorizationToken":
-                                     base64.b64encode(bytes('username:password')).
-                                         decode('utf-8'),
+                                 "authorizationToken": "dXNlcm5hbWU6cGFzc3dvcmQ =",
                                  "expiresAt": "",
                                  "proxyEndpoint": image
                               }
