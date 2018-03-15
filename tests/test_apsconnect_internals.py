@@ -26,6 +26,8 @@ from apsconnectcli.apsconnect import (
     main,
     APSConnectUtil,
     _create_image_pull_secret,
+    _create_image_pull_secret_key,
+    _get_info_from_image
 )
 
 from apsconnectcli.cluster import AvailabilityCheckResult
@@ -912,11 +914,11 @@ class CreateImagePullSecretTest(TestCase):
 
         return body
 
-    def test_create_image_pull_secret_check(self, namespace='default'):
+    def test_create_image_pull_secret(self, namespace='default'):
         name = 'test'
-        user_name = 'AWS'
+        user_name = 'test'
         user_password = 'QVdTOnBhc3N3b3Jk'
-        endpoint = '810347220345.dkr.ecr.us-east-1.amazonaws.com/dropbox-business_9368:latest'
+        endpoint = '1234567890.dkr.ecr.region-1.amazonaws.com/test-repo:latest'
 
         fake_api = MagicMock()
         test_body = self._create_image_pull_secret_body(name, user_name, user_password, endpoint, namespace)
@@ -941,3 +943,30 @@ class CreateImagePullSecretTest(TestCase):
         fake_api.create_namespaced_secret.assert_called_once_with(namespace=test_namespace,
                                                                   body=test_body)
 
+    def test_create_image_pull_secret_key(self, namespace='default'):
+        name = 'test'
+        image = '810347220345.dkr.ecr.us-east-1.amazonaws.com/test-neeladri-007:latest'
+        aws_ecr_key = 'AKIAIFIJBX27SHYSYWTA'
+        aws_ecr_secret = 'taVejGt/VO8WELJl7tM9KhyM3hiUqkdIl5zIPZoj'
+
+        fake_api = MagicMock()
+
+        if namespace is not None:
+            test_namespace = namespace
+            _create_image_pull_secret_key(name=name,
+                                          image=image,
+                                          aws_ecr_key=aws_ecr_key,
+                                          aws_ecr_secret=aws_ecr_secret,
+                                          core_v1=fake_api,
+                                          namespace=test_namespace)
+        else:
+            _create_image_pull_secret_key(name=name,
+                                          image=image,
+                                          aws_ecr_key=aws_ecr_key,
+                                          aws_ecr_secret=aws_ecr_secret,
+                                          core_v1=fake_api)
+
+    def test__get_info_from_image(self):
+        image = '1234567890.dkr.ecr.region-1.amazonaws.com/test-repo:latest'
+
+        _get_info_from_image (image)
