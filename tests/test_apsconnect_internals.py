@@ -7,17 +7,11 @@ from unittest import TestCase
 from apsconnectcli.apsconnect import (
     GITHUB_RELEASES_PAGE,
     KUBE_FILE_PATH,
-    _assert_hub_version,
-    _osaapi_raise_for_status,
-    _get_cfg,
     _get_k8s_api_client,
-    _get_properties,
-    _get_resclass_name,
     _cluster_probe_connection,
     _create_secret,
     _create_deployment,
     _create_service,
-    _extract_files,
     _to_bytes,
     bin_version,
     get_version,
@@ -32,48 +26,15 @@ from tests.fakes import FakeData, FakeK8sApi
 from tests import utils
 
 if sys.version_info >= (3,):
-    from unittest.mock import patch, mock_open, call, MagicMock
+    from unittest.mock import patch, call, MagicMock
 
     _BUILTINS_OPEN = 'builtins.open'
     _BUILTINS_PRINT = 'builtins.print'
 else:
-    from mock import patch, mock_open, call, MagicMock
+    from mock import patch, call, MagicMock
 
     _BUILTINS_OPEN = 'apsconnectcli.apsconnect.open'
     _BUILTINS_PRINT = 'apsconnectcli.apsconnect.print'
-
-
-class OsaApiRaiseForStatusTest(TestCase):
-    """Tests for apsconnect._osaapi_raise_for_status"""
-
-    _SUCCESS_CODE = 0
-    _FAKE_ERR_CODE = 100500
-    _FAKE_ERR_MSG = 'Not enough minerals.'
-
-    def test_response_with_error_message(self):
-        resp_with_err_msg = {
-            'status': self._FAKE_ERR_CODE,
-            'error_message': self._FAKE_ERR_MSG
-        }
-        self.assertRaisesRegexp(Exception,
-                                r'Error: {}'.format(self._FAKE_ERR_MSG),
-                                _osaapi_raise_for_status,
-                                resp_with_err_msg)
-
-    def test_response_with_status_without_err_msg(self):
-        response = {
-            'status': self._FAKE_ERR_CODE
-        }
-        self.assertRaisesRegexp(Exception,
-                                r'Error: Unknown {}'.format(response),
-                                _osaapi_raise_for_status,
-                                response)
-
-    def test_successful_response(self):
-        response = {
-            'status': self._SUCCESS_CODE
-        }
-        _osaapi_raise_for_status(response)  # no exceptions
 
 
 class GetK8sApiClientTest(TestCase):
@@ -89,26 +50,6 @@ class GetK8sApiClientTest(TestCase):
         custom_file_path = '/tmp/kube_config'
         _get_k8s_api_client(custom_file_path)
         config_mock.assert_called_once_with(config_file=custom_file_path)
-
-
-class GetPropertiesTest(TestCase):
-    """Tests for _get_properties"""
-
-    def test_schema_with_properties_section(self):
-        with patch(_BUILTINS_OPEN, mock_open(read_data=FakeData.SCHEMA_JSON)) as mock_file:
-            props = _get_properties(FakeData.SCHEMA_PATH)
-            mock_file.assert_called_once_with(FakeData.SCHEMA_PATH)
-            self.assertEqual(FakeData.PROPERTIES, props)
-
-    def test_schema_without_properties(self):
-        with patch(_BUILTINS_OPEN, mock_open(read_data=FakeData.BAD_SCHEMA_JSON)) as mock_file:
-            self.assertRaises(SystemExit, _get_properties, FakeData.SCHEMA_PATH)
-            mock_file.assert_called_once_with(FakeData.SCHEMA_PATH)
-
-    def test_bad_json(self):
-        with patch(_BUILTINS_OPEN, mock_open(read_data=FakeData.BAD_JSON)) as mock_file:
-            self.assertRaises(SystemExit, _get_properties, FakeData.SCHEMA_PATH)
-            mock_file.assert_called_once_with(FakeData.SCHEMA_PATH)
 
 
 class ClusterProbeConnectionTest(TestCase):
@@ -594,167 +535,6 @@ class CreateServiceTest(TestCase):
         fake_core_v1.delete_namespaced_service.assert_called_once_with(**deletion_kwargs)
         fake_core_v1.create_namespaced_service.assert_called_once_with(
             namespace=namespace, body=service)
-
-
-class ResClassTest(TestCase):
-    """Tests for _get_resclass_name()"""
-
-    def test_get_resclass_name_for_current_units(self):
-        data = {
-            'Kbit/sec': 'rc.saas.resource.kbps',
-            'kb': 'rc.saas.resource',
-            'mb-h': 'rc.saas.resource.mbh',
-            'mhz': 'rc.saas.resource.mhz',
-            'mhzh': 'rc.saas.resource.mhzh',
-            'unit': 'rc.saas.resource.unit',
-            'unit-h': 'rc.saas.resource.unith'
-        }
-
-        for key, value in data.items():
-            self.assertEqual(_get_resclass_name(key), value)
-
-    def test_get_resclass_name_for_new_unit(self):
-        self.assertEqual(
-            _get_resclass_name('new-unit'),
-            'rc.saas.resource.unit',
-        )
-
-    def test_get_resclass_name_witout_unit(self):
-        self.assertEqual(
-            _get_resclass_name(''),
-            'rc.saas.resource.unit',
-        )
-
-
-class ExtractFilesTest(TestCase):
-    def test_user_detected_correctly_if_user_schema(self):
-        with patch('apsconnectcli.apsconnect.zipfile') as zipfile_mock:
-            zip_ref = MagicMock('zz')
-
-            def extract(filename, path):
-                return filename
-
-            zip_ref.extract = extract
-            zipfile_mock.ZipFile.return_value.__enter__.return_value = zip_ref
-
-            package_info = _extract_files('zz', 'zz')
-            self.assertTrue(package_info.user_service)
-
-    def test_user_detected_correctly_if_user_user_schema(self):
-        with patch('apsconnectcli.apsconnect.zipfile') as zipfile_mock:
-            zip_ref = MagicMock('zz')
-
-            def extract(filename, path):
-                if 'user' in filename and 'user.user' not in filename:
-                    raise KeyError("Fail")
-                return filename
-
-            zip_ref.extract = extract
-            zipfile_mock.ZipFile.return_value.__enter__.return_value = zip_ref
-
-            package_info = _extract_files('zz', 'zz')
-            self.assertTrue(package_info.user_service)
-
-    def test_user_detected_correctly_if_no_user_integration(self):
-        with patch('apsconnectcli.apsconnect.zipfile') as zipfile_mock:
-            zip_ref = MagicMock('zz')
-
-            def extract(filename, path):
-                if 'user' in filename:
-                    raise KeyError("Fail")
-                return filename
-
-            zip_ref.extract = extract
-            zipfile_mock.ZipFile.return_value.__enter__.return_value = zip_ref
-
-            package_info = _extract_files('zz', 'zz')
-            self.assertFalse(package_info.user_service)
-
-
-class GetCfgTest(TestCase):
-    def test_file_not_found(self):
-        with patch(_BUILTINS_OPEN) as open_mock, \
-                patch(_BUILTINS_PRINT) as print_mock, \
-                patch('apsconnectcli.apsconnect.sys') as sys_mock:
-            err = IOError()
-            err.errno = 2
-            open_mock.side_effect = err
-            _get_cfg()
-
-            self.assertTrue(print_mock.called)
-            self.assertTrue("Could not find connected hub data."
-                            in print_mock.call_args[0][0])
-            sys_mock.exit.assert_called_with(1)
-
-    def test_file_other_ioerr(self):
-        with patch(_BUILTINS_OPEN) as open_mock, \
-                patch(_BUILTINS_PRINT) as print_mock, \
-                patch('apsconnectcli.apsconnect.sys') as sys_mock:
-            err = IOError("Error message text")
-            err.errno = 13
-            open_mock.side_effect = err
-            _get_cfg()
-
-            self.assertTrue(print_mock.called)
-            self.assertTrue("Could not open configuration file"
-                            in print_mock.call_args[0][0])
-            self.assertTrue("Error message text"
-                            in print_mock.call_args[0][0])
-            sys_mock.exit.assert_called_with(1)
-
-    def test_file_unreadable(self):
-        with patch(_BUILTINS_OPEN), \
-             patch(_BUILTINS_PRINT) as print_mock, \
-                patch('apsconnectcli.apsconnect.json') as json_mock, \
-                patch('apsconnectcli.apsconnect.sys') as sys_mock:
-            json_mock.load.side_effect = ValueError()
-
-            _get_cfg()
-
-            self.assertTrue(print_mock.called)
-            self.assertTrue("Could not parse the configuration file"
-                            in print_mock.call_args[0][0])
-            sys_mock.exit.assert_called_with(1)
-
-    def test_unexpected_error(self):
-        with patch(_BUILTINS_OPEN), \
-             patch(_BUILTINS_PRINT) as print_mock, \
-                patch('apsconnectcli.apsconnect.json') as json_mock, \
-                patch('apsconnectcli.apsconnect.sys') as sys_mock:
-            json_mock.load.side_effect = Exception("All is lost")
-
-            _get_cfg()
-
-            self.assertTrue(print_mock.called)
-            self.assertTrue("All is lost" in print_mock.call_args[0][0])
-            sys_mock.exit.assert_called_with(1)
-
-    def test_ok(self):
-        with patch(_BUILTINS_OPEN), \
-             patch(_BUILTINS_PRINT) as print_mock, \
-                patch('apsconnectcli.apsconnect.json') as json_mock, \
-                patch('apsconnectcli.apsconnect.sys') as sys_mock:
-            json_mock.load.return_value = "Config data"
-
-            config = _get_cfg()
-
-            self.assertEqual(config, "Config data")
-            self.assertFalse(print_mock.called)
-            sys_mock.exit.assert_not_called()
-
-
-class AssertHubVersion(TestCase):
-    def test_supported_version(self):
-        with patch('apsconnectcli.apsconnect.sys') as sys_mock:
-            _assert_hub_version('oa-7.13-1216')
-
-            sys_mock.exit.assert_not_called()
-
-    def test_unsupported_version(self):
-        with patch('apsconnectcli.apsconnect.sys') as sys_mock:
-            _assert_hub_version('oa-7.0-1216')
-
-            sys_mock.exit.assert_called_with(1)
 
 
 class TestVersion(TestCase):
