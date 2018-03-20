@@ -1,8 +1,8 @@
 from unittest import TestCase
 
-from mock import patch
+from mock import MagicMock, patch
 
-from apsconnectcli.hub import _osaapi_raise_for_status, Hub
+from apsconnectcli.hub import osaapi_raise_for_status, Hub, APS
 
 
 class OsaApiRaiseForStatusTest(TestCase):
@@ -19,7 +19,7 @@ class OsaApiRaiseForStatusTest(TestCase):
         }
         self.assertRaisesRegexp(Exception,
                                 r'Error: {}'.format(self._FAKE_ERR_MSG),
-                                _osaapi_raise_for_status,
+                                osaapi_raise_for_status,
                                 resp_with_err_msg)
 
     def test_response_with_status_without_err_msg(self):
@@ -28,17 +28,17 @@ class OsaApiRaiseForStatusTest(TestCase):
         }
         self.assertRaisesRegexp(Exception,
                                 r'Error: Unknown {}'.format(response),
-                                _osaapi_raise_for_status,
+                                osaapi_raise_for_status,
                                 response)
 
     def test_successful_response(self):
         response = {
             'status': self._SUCCESS_CODE
         }
-        _osaapi_raise_for_status(response)  # no exceptions
+        osaapi_raise_for_status(response)  # no exceptions
 
 
-class AssertHubVersion(TestCase):
+class TestHub(TestCase):
     def test_supported_version(self):
         with patch('apsconnectcli.hub.sys') as sys_mock:
             Hub._assert_supported_version('oa-7.13-1216')
@@ -50,10 +50,6 @@ class AssertHubVersion(TestCase):
             Hub._assert_supported_version('oa-7.0-1216')
 
             sys_mock.exit.assert_called_with(1)
-
-
-class ResClassTest(TestCase):
-    """Tests for _get_resclass_name()"""
 
     def test_get_resclass_name_for_current_units(self):
         data = {
@@ -75,8 +71,176 @@ class ResClassTest(TestCase):
             'rc.saas.resource.unit',
         )
 
-    def test_get_resclass_name_witout_unit(self):
+    def test_get_resclass_name_without_unit(self):
         self.assertEqual(
             Hub._get_resclass_name(''),
             'rc.saas.resource.unit',
         )
+
+    def test_hub_init(self):
+        with patch('apsconnectcli.hub.osaapi'), \
+             patch('apsconnectcli.hub.APS') as aps_mock, \
+                patch('apsconnectcli.hub.get_config'), \
+                patch('apsconnectcli.hub.osaapi_raise_for_status'):
+            resp_mock = MagicMock()
+            resp_mock.content = b'[{"aps": {"id": "12345"}}]'
+            aps_mock.return_value.get.return_value = resp_mock
+
+            hub = Hub()
+
+            self.assertEqual(hub.hub_id, '12345')
+
+    def test_get_hub_version(self):
+        with patch('apsconnectcli.hub.xml_et') as xml_mock, \
+                patch('apsconnectcli.hub.osaapi_raise_for_status'):
+            api = MagicMock()
+            xml_mock.fromstring.return_value.find.return_value.text = 'test'
+
+            version = Hub._get_hub_version(api)
+
+        self.assertEqual(version, 'test')
+        xml_mock.fromstring.return_value.find.assert_called()
+        self.assertEqual(xml_mock.fromstring.return_value.find.call_args[0][0], 'ClientVersion')
+
+    def test_hub_incorrect_id(self):
+        with patch('apsconnectcli.hub.osaapi'), \
+             patch('apsconnectcli.hub.APS') as aps_mock, \
+                patch('apsconnectcli.hub.get_config'), \
+                patch('apsconnectcli.hub.osaapi_raise_for_status'), \
+                patch('apsconnectcli.hub.sys') as sys_mock:
+            resp_mock = MagicMock()
+            resp_mock.content = b'["aps": {"id": "12345"}}]'
+            aps_mock.return_value.get.return_value = resp_mock
+
+            Hub()
+
+            sys_mock.exit.assert_called_with(1)
+
+    def test_import_package_http(self):
+        with patch('apsconnectcli.hub.osaapi') as api_mock, \
+                patch('apsconnectcli.hub.APS') as aps_mock, \
+                patch('apsconnectcli.hub.get_config'), \
+                patch('apsconnectcli.hub.osaapi_raise_for_status'):
+            resp_mock = MagicMock()
+            resp_mock.content = b'[{"aps": {"id": "12345"}}]'
+            aps_mock.return_value.get.return_value = resp_mock
+
+            hub = Hub()
+
+            package = MagicMock()
+            package.http = True
+            package.source = 'http_source'
+            package.body = 'package_body'
+
+            hub.import_package(package)
+
+            import_mock = api_mock.OSA.return_value.APS.importPackage
+
+            import_mock.assert_called()
+            self.assertEqual(import_mock.call_args[1].get('package_url', ''), 'http_source')
+
+    def test_import_package_body(self):
+        with patch('apsconnectcli.hub.osaapi') as api_mock, \
+                patch('apsconnectcli.hub.APS') as aps_mock, \
+                patch('apsconnectcli.hub.get_config'), \
+                patch('apsconnectcli.hub.osaapi_raise_for_status'):
+            resp_mock = MagicMock()
+            resp_mock.content = b'[{"aps": {"id": "12345"}}]'
+            aps_mock.return_value.get.return_value = resp_mock
+
+            hub = Hub()
+
+            package = MagicMock()
+            package.http = False
+            package.source = 'http_source'
+            package.body = 'package_body'
+
+            hub.import_package(package)
+
+            import_mock = api_mock.OSA.return_value.APS.importPackage
+
+            import_mock.assert_called()
+            self.assertEqual(import_mock.call_args[1].get('package_body', ''), 'package_body')
+
+
+class TestAPS(TestCase):
+    def test_init(self):
+        with patch('apsconnectcli.hub.get_config') as config_mock:
+            config_mock.return_value = {
+                'use_tls_aps': True,
+                'aps_host': 'aps_host',
+                'aps_port': 'aps_port'
+            }
+            aps = APS('token')
+            self.assertEqual(aps.token, 'token')
+            self.assertEqual(aps.url, 'https://aps_host:aps_port')
+
+    def test_get(self):
+        with patch('apsconnectcli.hub.get_config') as config_mock, \
+                patch('apsconnectcli.hub.requests') as requests_mock:
+            config_mock.return_value = {
+                'use_tls_aps': True,
+                'aps_host': 'aps_host',
+                'aps_port': 'aps_port'
+            }
+            aps = APS('token')
+
+            aps.get('test')
+
+        requests_mock.get.assert_called()
+        self.assertEqual(requests_mock.get.call_args[1].get('headers'), 'token')
+        self.assertEqual(requests_mock.get.call_args[1].get('verify'), False)
+        self.assertEqual(requests_mock.get.call_args[0][0], 'https://aps_host:aps_port/test')
+
+    def test_post(self):
+        with patch('apsconnectcli.hub.get_config') as config_mock, \
+                patch('apsconnectcli.hub.requests') as requests_mock:
+            config_mock.return_value = {
+                'use_tls_aps': True,
+                'aps_host': 'aps_host',
+                'aps_port': 'aps_port'
+            }
+            aps = APS('token')
+
+            aps.post('test', 'json')
+
+        requests_mock.post.assert_called()
+        self.assertEqual(requests_mock.post.call_args[1].get('headers'), 'token')
+        self.assertEqual(requests_mock.post.call_args[1].get('json'), 'json')
+        self.assertEqual(requests_mock.post.call_args[1].get('verify'), False)
+        self.assertEqual(requests_mock.post.call_args[0][0], 'https://aps_host:aps_port/test')
+
+    def test_put(self):
+        with patch('apsconnectcli.hub.get_config') as config_mock, \
+                patch('apsconnectcli.hub.requests') as requests_mock:
+            config_mock.return_value = {
+                'use_tls_aps': True,
+                'aps_host': 'aps_host',
+                'aps_port': 'aps_port'
+            }
+            aps = APS('token')
+
+            aps.put('test', 'json')
+
+        requests_mock.put.assert_called()
+        self.assertEqual(requests_mock.put.call_args[1].get('headers'), 'token')
+        self.assertEqual(requests_mock.put.call_args[1].get('json'), 'json')
+        self.assertEqual(requests_mock.put.call_args[1].get('verify'), False)
+        self.assertEqual(requests_mock.put.call_args[0][0], 'https://aps_host:aps_port/test')
+
+    def test_delete(self):
+        with patch('apsconnectcli.hub.get_config') as config_mock, \
+                patch('apsconnectcli.hub.requests') as requests_mock:
+            config_mock.return_value = {
+                'use_tls_aps': True,
+                'aps_host': 'aps_host',
+                'aps_port': 'aps_port'
+            }
+            aps = APS('token')
+
+            aps.delete('test')
+
+        requests_mock.delete.assert_called()
+        self.assertEqual(requests_mock.delete.call_args[1].get('headers'), 'token')
+        self.assertEqual(requests_mock.delete.call_args[1].get('verify'), False)
+        self.assertEqual(requests_mock.delete.call_args[0][0], 'https://aps_host:aps_port/test')

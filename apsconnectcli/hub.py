@@ -17,24 +17,12 @@ RPC_CONNECT_PARAMS = ('host', 'user', 'password', 'ssl', 'port')
 APS_CONNECT_PARAMS = ('aps_host', 'aps_port', 'use_tls_aps')
 
 
-def _osaapi_raise_for_status(r):
+def osaapi_raise_for_status(r):
     if r['status']:
         if 'error_message' in r:
             raise Exception("Error: {}".format(r['error_message']))
         else:
             raise Exception("Error: Unknown {}".format(r))
-
-
-def raise_for_status(fn):
-    def wrapped(*args, **kwargs):
-        r = fn(args, kwargs)
-        if r['status']:
-            if 'error_message' in r:
-                raise Exception("Error: {}".format(r['error_message']))
-            else:
-                raise Exception("Error: Unknown {}".format(r))
-
-    return wrapped
 
 
 class Hub(object):
@@ -60,11 +48,8 @@ class Hub(object):
             print("Connectivity with Hub RPC API [ok]")
             Hub._assert_supported_version(hub_version)
             print("Hub version {}".format(hub_version))
-            response = requests.get(
-                '{}/{}'.format(
-                    Hub._get_aps_url(aps_host, aps_port, use_tls_aps),
-                    'aps/2/applications/'),
-                headers=Hub._get_user_token(hub, 1), verify=False)
+            aps = APS(Hub._get_user_token(hub, 1))
+            response = aps.get('aps/2/applications/')
             response.raise_for_status()
             print("Connectivity with Hub APS API [ok]")
         except Exception as e:
@@ -81,13 +66,9 @@ class Hub(object):
     @staticmethod
     def _get_hub_version(api):
         r = api.statistics.getStatisticsReport(reports=[{'name': 'report-for-cep', 'value': ''}])
-        _osaapi_raise_for_status(r)
+        osaapi_raise_for_status(r)
         tree = xml_et.fromstring(r['result'][0]['value'].encode('utf-8'))
         return tree.find('ClientVersion').text
-
-    @staticmethod
-    def _get_aps_url(aps_host, aps_port, use_tls_aps):
-        return '{}://{}:{}'.format('https' if use_tls_aps else 'http', aps_host, aps_port)
 
     @staticmethod
     def _assert_supported_version(version):
@@ -106,7 +87,7 @@ class Hub(object):
     @staticmethod
     def _get_user_token(hub, user_id):
         r = hub.APS.getUserToken(user_id=user_id)
-        _osaapi_raise_for_status(r)
+        osaapi_raise_for_status(r)
         return {'APS-Token': r['result']['aps_token']}
 
     @staticmethod
@@ -133,8 +114,8 @@ class Hub(object):
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
-
-        return data[0]['aps']['id'] if data else None
+        else:
+            return data[0]['aps']['id'] if data else None
 
     @staticmethod
     def info():
@@ -154,13 +135,13 @@ class Hub(object):
     def aps_devel_mode(self, disable=False):
         r = self.osaapi.setSystemProperty(account_id=1, name='APS_DEVEL_MODE',
                                           bool_value=not bool(disable))
-        _osaapi_raise_for_status(r)
+        osaapi_raise_for_status(r)
         print("APS Development mode {}.".format('DISABLED' if disable else 'ENABLED'))
 
     def import_package(self, package):
         args = {'package_url': package.source} if package.http else {'package_body': package.body}
         r = self.osaapi.APS.importPackage(**args)
-        _osaapi_raise_for_status(r)
+        osaapi_raise_for_status(r)
 
         return str(r['result']['application_id'])
 
@@ -257,7 +238,7 @@ class Hub(object):
 
         for t in core_resource_types_payload:
             r = self.osaapi.addResourceType(**t)
-            _osaapi_raise_for_status(r)
+            osaapi_raise_for_status(r)
             rt_ids[r['result']['resource_type_id']] = 1
 
         return rt_ids
@@ -286,7 +267,7 @@ class Hub(object):
         }
 
         response = self.osaapi.addResourceType(**user_resource_type_payload)
-        _osaapi_raise_for_status(response)
+        osaapi_raise_for_status(response)
 
         return {response['result']['resource_type_id']: -1}
 
@@ -313,7 +294,7 @@ class Hub(object):
             }
 
             response = self.osaapi.addResourceType(**payload)
-            _osaapi_raise_for_status(response)
+            osaapi_raise_for_status(response)
             rt_ids[response['result']['resource_type_id']] = -1
 
         return rt_ids
@@ -341,7 +322,7 @@ class Hub(object):
             }
 
             response = self.osaapi.addResourceType(**payload)
-            _osaapi_raise_for_status(response)
+            osaapi_raise_for_status(response)
 
             rt_ids[response['result']['resource_type_id']] = 0
 
@@ -362,7 +343,7 @@ class Hub(object):
         }
 
         r = self.osaapi.addServiceTemplate(**payload)
-        _osaapi_raise_for_status(r)
+        osaapi_raise_for_status(r)
 
         return r['result']['st_id']
 
@@ -373,7 +354,7 @@ class Hub(object):
         }
 
         r = self.osaapi.setSTRTLimits(**payload)
-        _osaapi_raise_for_status(r)
+        osaapi_raise_for_status(r)
 
 
 class APS(object):
