@@ -151,7 +151,7 @@ class TestHub(TestCase):
             hub = Hub()
 
             package = MagicMock()
-            package.http = False
+            package.is_http = False
             package.source = 'http_source'
             package.body = 'package_body'
 

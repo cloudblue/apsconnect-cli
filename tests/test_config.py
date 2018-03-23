@@ -78,10 +78,10 @@ class GetCfgTest(TestCase):
              patch(_BUILTINS_PRINT) as print_mock, \
                 patch('apsconnectcli.config.json') as json_mock, \
                 patch('apsconnectcli.config.sys') as sys_mock:
-            json_mock.load.return_value = "Config data"
+            json_mock.load.return_value = 'Config data'
 
             config = get_config()
 
-            self.assertEqual(config, "Config data")
+            self.assertEqual(config, 'Config data')
             self.assertFalse(print_mock.called)
             sys_mock.exit.assert_not_called()

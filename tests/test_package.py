@@ -50,7 +50,7 @@ class ExtractFilesTest(TestCase):
 
             def extract(filename, path):
                 if 'user' in filename and 'user.user' not in filename:
-                    raise KeyError("Fail")
+                    raise KeyError('Fail')
                 return filename
 
             zip_ref.extract = extract
@@ -74,7 +74,7 @@ class ExtractFilesTest(TestCase):
 
             def extract(filename, path):
                 if 'user' in filename:
-                    raise KeyError("Fail")
+                    raise KeyError('Fail')
                 return filename
 
             zip_ref.extract = extract

@@ -37,13 +37,11 @@ class Package(object):
     app_properties = None
     tenant_properties = None
 
-    counters = None
-
     def __init__(self, source):
         with TemporaryDirectory() as tempdir:
             self.source = source
             self.tempdir = tempdir
-            if self.http:
+            if self.is_http:
                 self.filename = Package._download(self.source, self.tempdir)
             else:
                 self.filename = os.path.basename(self.source)
@@ -78,8 +76,10 @@ class Package(object):
 
     @property
     def resources(self):
-        resource_types = ['http://aps-standard.org/types/core/resource/1.0#Counter',
-                          'http://aps-standard.org/types/core/resource/1.0#Limit']
+        resource_types = [
+            'http://aps-standard.org/types/core/resource/1.0#Counter',
+            'http://aps-standard.org/types/core/resource/1.0#Limit',
+        ]
         resources = {}
 
         for key in self.tenant_properties:
@@ -97,7 +97,7 @@ class Package(object):
         return {k: v for k, v in self.resources.items() if 'title' not in v}
 
     @property
-    def http(self):
+    def is_http(self):
         return self.source.startswith('http://') or self.source.startswith('https://')
 
     def _extract_files(self):

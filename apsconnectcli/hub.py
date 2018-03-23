@@ -125,7 +125,7 @@ class Hub(object):
         with open(CFG_FILE_PATH) as f:
             hub_cfg = json.load(f)
 
-        host = "{}:{}".format(hub_cfg['host'], hub_cfg['port'])
+        host = '{}:{}'.format(hub_cfg['host'], hub_cfg['port'])
         user = hub_cfg['user']
         return host, user
 
@@ -139,7 +139,8 @@ class Hub(object):
         print("APS Development mode {}.".format('DISABLED' if disable else 'ENABLED'))
 
     def import_package(self, package):
-        args = {'package_url': package.source} if package.http else {'package_body': package.body}
+        args = {'package_url': package.source} if package.is_http else {
+            'package_body': package.body}
         r = self.osaapi.APS.importPackage(**args)
         osaapi_raise_for_status(r)
 
@@ -284,7 +285,7 @@ class Hub(object):
                     },
                     {
                         'var_name': 'service_id',
-                        'var_value': "tenant"
+                        'var_value': 'tenant'
                     },
                     {
                         'var_name': 'resource_id',
@@ -312,7 +313,7 @@ class Hub(object):
                     },
                     {
                         'var_name': 'service_id',
-                        'var_value': "tenant"
+                        'var_value': 'tenant'
                     },
                     {
                         'var_name': 'resource_id',
