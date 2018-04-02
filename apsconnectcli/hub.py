@@ -48,7 +48,8 @@ class Hub(object):
             print("Connectivity with Hub RPC API [ok]")
             Hub._assert_supported_version(hub_version)
             print("Hub version {}".format(hub_version))
-            aps = APS(Hub._get_user_token(hub, 1))
+            aps_url = '{}://{}:{}'.format('https' if use_tls_aps else 'http', aps_host, aps_port)
+            aps = APS(Hub._get_user_token(hub, 1), aps_url)
             response = aps.get('aps/2/applications/')
             response.raise_for_status()
             print("Connectivity with Hub APS API [ok]")
@@ -362,9 +363,12 @@ class APS(object):
     url = None
     token = None
 
-    def __init__(self, token):
-        config = get_config()
-        self.url = APS._get_aps_url(**{k: config[k] for k in APS_CONNECT_PARAMS})
+    def __init__(self, token, url=None):
+        if url:
+            self.url = url
+        else:
+            config = get_config()
+            self.url = APS._get_aps_url(**{k: config[k] for k in APS_CONNECT_PARAMS})
         self.token = token
 
     @staticmethod
