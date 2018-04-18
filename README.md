@@ -27,6 +27,11 @@ CentOS 7.2 provide outdated Python 2.7.5 release, so you'll need an additional s
     pip install -U apsconnectcli
     ```
 
+If you get an error message mentioning `invalid environment marker` upgrade the `setuptools` package before installing apsconnect-cli:
+```
+pip install -U apsconnectcli
+```
+
 ### How to setup a kubernetes cluster
 [Read a good step-by-step instruction by JetStack team](https://github.com/jetstack/kube-lego/tree/master/examples/nginx)
 
@@ -100,7 +105,7 @@ Connector backend - https://xxx
 ```
 apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
 				            --backend-url BACKEND_URL [--settings-file SETTINGS_FILE] \
-				            [--network = public ] [--hub-id HUB_ID]
+				            [--network = proxy ] [--hub-id HUB_ID]
 ```
 ```
 ⇒  apsconnect install-frontend package.aps.zip application-3-v1-687fd3e99eb 639a0c2bf3ab461aaf74a5c622d1fa34 --backend-url http://127.197.49.26/
@@ -112,7 +117,6 @@ Service template "connector" created with id=16 [ok]
 Limits for Service template "16" are applied [ok]
 ```
 
-_Note that `--network proxy` enables support of outbound proxy. [More details](https://doc.apsstandard.org/7.1/concepts/backend/connectors/proxy/#setting-external-application-instance)_
 ## Misc
 
 #### Check utility version
