@@ -256,7 +256,7 @@ class APSConnectUtil:
         print("[Success]")
 
     def install_frontend(self, source, oauth_key, oauth_secret, backend_url, settings=None,
-                         network='proxy', hub_id=None):
+                         network='proxy', hub_id=None, instance_only=False):
         """ Install connector-frontend in Odin Automation Hub, --source can be http(s):// or
         filepath"""
 
@@ -270,7 +270,7 @@ class APSConnectUtil:
         settings = json.load(open(settings)) if settings else {}
         hub = Hub()
 
-        package = Package(source)
+        package = Package(source, instance_only=instance_only)
         print("Importing connector {} {}-{}".format(package.connector_id,
                                                     package.version,
                                                     package.release))
@@ -282,6 +282,9 @@ class APSConnectUtil:
         instance_uuid = hub.create_instance(package, oauth_key, oauth_secret, backend_url,
                                             settings, network, hub_id)
         print("Application instance creation completed [ok]")
+
+        if instance_only:
+            return
 
         # Create resource types
         resource_types = hub.create_rts(package, application_id, instance_uuid)

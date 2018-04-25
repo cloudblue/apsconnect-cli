@@ -18,7 +18,11 @@ pip install apsconnectcli
 ### Python releases before 2.7.9 (like CentOS 7.2)
 CentOS 7.2 provide outdated Python 2.7.5 release, so you'll need an additional step to make it work properly:
 
-1. First install backport of ssl.match_hostname()
+1. Update the setuptools package
+    ```
+    pip install -U setuptools
+    ```
+1. Install backport of ssl.match_hostname()
     ```
     pip install -U backports.ssl-match-hostname
     ```
@@ -26,11 +30,6 @@ CentOS 7.2 provide outdated Python 2.7.5 release, so you'll need an additional s
     ```
     pip install -U apsconnectcli
     ```
-
-If you get an error message mentioning `invalid environment marker` upgrade the `setuptools` package before installing apsconnect-cli:
-```
-pip install -U apsconnectcli
-```
 
 ### How to setup a kubernetes cluster
 [Read a good step-by-step instruction by JetStack team](https://github.com/jetstack/kube-lego/tree/master/examples/nginx)
@@ -104,8 +103,8 @@ Connector backend - https://xxx
 
 ```
 apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
-				            --backend-url BACKEND_URL [--settings-file SETTINGS_FILE] \
-				            [--network = proxy ] [--hub-id HUB_ID]
+				            --backend-url BACKEND_URL [--settings SETTINGS_FILE] \
+				            [--network = proxy] [--hub-id HUB_ID] [--instance-only = false]
 ```
 ```
 ⇒  apsconnect install-frontend package.aps.zip application-3-v1-687fd3e99eb 639a0c2bf3ab461aaf74a5c622d1fa34 --backend-url http://127.197.49.26/
@@ -116,6 +115,14 @@ Resource types creation [ok]
 Service template "connector" created with id=16 [ok]
 Limits for Service template "16" are applied [ok]
 ```
+
+The `--settings` parameter is normally not required, it should point to a file containing data in JSON format that will be mixed in to application instance create API request.
+Can be used to provide custom application instance global settings.
+
+Use `--instance-only` flag if you wish to skip resource types and service templates creation.
+
+**WARNING** Due to limitations of Operations Automation API importing large (more than a few megabytes) packages from local source might fail.
+Use HTTP link as source for such packages.
 
 ## Misc
 

@@ -199,7 +199,7 @@ class Hub(object):
                   "Error: {}".format(package.connector_id, r.status_code, err))
             sys.exit(1)
 
-        return r.json()['app']['aps']['id']
+        return r.json()['app']['aps']['id'] if not package.instance_only else None
 
     def _create_core_rts(self, package, app_id, instance_uuid):
         rt_ids = {}
