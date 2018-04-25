@@ -103,7 +103,7 @@ Connector backend - https://xxx
 
 ```
 apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
-				            --backend-url BACKEND_URL [--settings-file SETTINGS_FILE] \
+				            --backend-url BACKEND_URL [--settings SETTINGS_FILE] \
 				            [--network = proxy] [--hub-id HUB_ID] [--instance-only = false]
 ```
 ```
@@ -116,7 +116,7 @@ Service template "connector" created with id=16 [ok]
 Limits for Service template "16" are applied [ok]
 ```
 
-The `--settings-file` parameter is normally not required, it should contain data in JSON format that will be mixed in to application instance create API request.
+The `--settings` parameter is normally not required, it should point to a file containing data in JSON format that will be mixed in to application instance create API request.
 Can be used to provide custom application instance global settings.
 
 Use `--instance-only` flag if you wish to skip resource types and service templates creation.
