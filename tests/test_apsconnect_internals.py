@@ -1,63 +1,40 @@
 import base64
+import os
 import sys
+from pkg_resources import DistributionNotFound
 from unittest import TestCase
 
 from apsconnectcli.apsconnect import (
+    GITHUB_RELEASES_PAGE,
     KUBE_FILE_PATH,
-    _osaapi_raise_for_status,
     _get_k8s_api_client,
-    _get_properties,
     _cluster_probe_connection,
     _create_secret,
     _create_deployment,
     _create_service,
     _to_bytes,
+    bin_version,
+    get_version,
+    get_latest_version,
+    main,
+    APSConnectUtil,
 )
+
+from apsconnectcli.cluster import AvailabilityCheckResult
 
 from tests.fakes import FakeData, FakeK8sApi
 from tests import utils
 
 if sys.version_info >= (3,):
-    from unittest.mock import patch, mock_open, call, MagicMock
+    from unittest.mock import patch, call, MagicMock
+
     _BUILTINS_OPEN = 'builtins.open'
     _BUILTINS_PRINT = 'builtins.print'
 else:
-    from mock import patch, mock_open, call, MagicMock
+    from mock import patch, call, MagicMock
+
     _BUILTINS_OPEN = 'apsconnectcli.apsconnect.open'
     _BUILTINS_PRINT = 'apsconnectcli.apsconnect.print'
-
-
-class OsaApiRaiseForStatusTest(TestCase):
-    """Tests for apsconnect._osaapi_raise_for_status"""
-
-    _SUCCESS_CODE = 0
-    _FAKE_ERR_CODE = 100500
-    _FAKE_ERR_MSG = 'Not enough minerals.'
-
-    def test_response_with_error_message(self):
-        resp_with_err_msg = {
-            'status': self._FAKE_ERR_CODE,
-            'error_message': self._FAKE_ERR_MSG
-        }
-        self.assertRaisesRegexp(Exception,
-                                r'Error: {}'.format(self._FAKE_ERR_MSG),
-                                _osaapi_raise_for_status,
-                                resp_with_err_msg)
-
-    def test_response_with_status_without_err_msg(self):
-        response = {
-            'status': self._FAKE_ERR_CODE
-        }
-        self.assertRaisesRegexp(Exception,
-                                r'Error: Unknown {}'.format(response),
-                                _osaapi_raise_for_status,
-                                response)
-
-    def test_successful_response(self):
-        response = {
-            'status': self._SUCCESS_CODE
-        }
-        _osaapi_raise_for_status(response)  # no exceptions
 
 
 class GetK8sApiClientTest(TestCase):
@@ -73,26 +50,6 @@ class GetK8sApiClientTest(TestCase):
         custom_file_path = '/tmp/kube_config'
         _get_k8s_api_client(custom_file_path)
         config_mock.assert_called_once_with(config_file=custom_file_path)
-
-
-class GetPropertiesTest(TestCase):
-    """Tests for _get_properties"""
-
-    def test_schema_with_properties_section(self):
-        with patch(_BUILTINS_OPEN, mock_open(read_data=FakeData.SCHEMA_JSON)) as mock_file:
-            props = _get_properties(FakeData.SCHEMA_PATH)
-            mock_file.assert_called_once_with(FakeData.SCHEMA_PATH)
-            self.assertEqual(FakeData.PROPERTIES, props)
-
-    def test_schema_without_properties(self):
-        with patch(_BUILTINS_OPEN, mock_open(read_data=FakeData.BAD_SCHEMA_JSON)) as mock_file:
-            self.assertRaises(SystemExit, _get_properties, FakeData.SCHEMA_PATH)
-            mock_file.assert_called_once_with(FakeData.SCHEMA_PATH)
-
-    def test_bad_json(self):
-        with patch(_BUILTINS_OPEN, mock_open(read_data=FakeData.BAD_JSON)) as mock_file:
-            self.assertRaises(SystemExit, _get_properties, FakeData.SCHEMA_PATH)
-            mock_file.assert_called_once_with(FakeData.SCHEMA_PATH)
 
 
 class ClusterProbeConnectionTest(TestCase):
@@ -507,6 +464,26 @@ class CreateDeploymentOverExistingItemsTest(CreateDeploymentBaseTest):
                             assert_core_v1_fn=self._assert_core_v1_called_for_pods)
 
 
+class CreateDeploymentPollingTest(TestCase):
+    def test_poll_ok(self):
+        api = MagicMock()
+        with patch('apsconnectcli.apsconnect.poll_deployment') as poll_deployment_mock, \
+                patch('apsconnectcli.apsconnect.sys') as sys_mock:
+            poll_deployment_mock.return_value = AvailabilityCheckResult(True, 'OK')
+            _create_deployment('name', 'image', api)
+            self.assertTrue(poll_deployment_mock.called)
+            sys_mock.exit.assert_not_called()
+
+    def test_poll_error(self):
+        api = MagicMock()
+        with patch('apsconnectcli.apsconnect.poll_deployment') as poll_deployment_mock, \
+                patch('apsconnectcli.apsconnect.sys') as sys_mock:
+            poll_deployment_mock.return_value = AvailabilityCheckResult(False, 'Error')
+            _create_deployment('name', 'image', api)
+            self.assertTrue(poll_deployment_mock.called)
+            sys_mock.exit.assert_called_with(1)
+
+
 class CreateServiceTest(TestCase):
     """Tests for _create_service()"""
 
@@ -558,3 +535,109 @@ class CreateServiceTest(TestCase):
         fake_core_v1.delete_namespaced_service.assert_called_once_with(**deletion_kwargs)
         fake_core_v1.create_namespaced_service.assert_called_once_with(
             namespace=namespace, body=service)
+
+
+class TestVersion(TestCase):
+    def test_latest_version(self):
+        with patch('apsconnectcli.apsconnect.get_version') as version_mock, \
+            patch('apsconnectcli.apsconnect.get_latest_version') as latest_version_mock, \
+                patch(_BUILTINS_PRINT) as print_mock:
+
+            version_mock.return_value = '1.2.3'
+            latest_version_mock.return_value = '1.2.3'
+            APSConnectUtil().version()
+
+        self.assertEqual(print_mock.call_count, 1)
+        self.assertTrue('1.2.3' in print_mock.call_args[0][0])
+
+    def test_outdated_version(self):
+        with patch('apsconnectcli.apsconnect.get_version') as version_mock, \
+            patch('apsconnectcli.apsconnect.get_latest_version') as latest_version_mock, \
+                patch(_BUILTINS_PRINT) as print_mock:
+
+            version_mock.return_value = '1.2.3'
+            latest_version_mock.return_value = '1.2.4'
+            APSConnectUtil().version()
+
+        self.assertEqual(print_mock.call_count, 2)
+        self.assertTrue('1.2.4' in print_mock.call_args[0][0])
+
+    def test_unknown_version(self):
+        with patch('apsconnectcli.apsconnect.get_version') as version_mock, \
+            patch('apsconnectcli.apsconnect.get_latest_version'), \
+                patch(_BUILTINS_PRINT) as print_mock:
+
+            version_mock.return_value = None
+
+            APSConnectUtil().version()
+
+        self.assertEqual(print_mock.call_count, 1)
+        self.assertTrue(GITHUB_RELEASES_PAGE in print_mock.call_args[0][0])
+
+
+class TestHelpers(TestCase):
+    def test_bin_version_ok(self):
+        with patch('apsconnectcli.apsconnect.sys') as sys_mock, \
+                patch(_BUILTINS_OPEN) as open_mock:
+            open_mock.return_value.__enter__.return_value.read.return_value = 'v100500'
+            sys_mock._MEIPASS = 'pyinstaller_data_dir'
+            result = bin_version()
+
+        open_mock.assert_called_once_with(os.path.join(sys_mock._MEIPASS, 'VERSION'))
+        self.assertEqual(result, 'v100500')
+
+    def test_bin_version_exception(self):
+        self.assertEqual(bin_version(), None)
+
+    def test_get_version_from_package_ok(self):
+        with patch('apsconnectcli.apsconnect.pkg_resources') as pkg_mock:
+            pkg_mock.get_distribution.return_value.version = 'v100500'
+            result = get_version()
+
+        self.assertEqual(result, 'v100500')
+
+    def test_get_version_from_package_error(self):
+        with patch('apsconnectcli.apsconnect.pkg_resources') as pkg_mock, \
+                patch('apsconnectcli.apsconnect.bin_version') as bin_mock:
+            bin_mock.return_value = 'v100500'
+            pkg_mock.DistributionNotFound = DistributionNotFound
+            pkg_mock.get_distribution.side_effect = DistributionNotFound()
+            result = get_version()
+
+        self.assertEqual(result, 'v100500')
+
+    def test_get_latest_version_ok(self):
+        with patch('apsconnectcli.apsconnect.get') as get_mock:
+            get_mock.return_value.json.return_value = {'tag_name': 'v123'}
+            result = get_latest_version()
+
+        self.assertEqual(result, '123')
+
+    def test_get_latest_version_error(self):
+        with patch('apsconnectcli.apsconnect.get') as get_mock:
+            get_mock.return_value = 'Definitely not JSON'
+            result = get_latest_version()
+
+        self.assertIsNone(result)
+
+    def test_main_prints_version(self):
+        with patch('apsconnectcli.apsconnect.fire'), \
+             patch('apsconnectcli.apsconnect.get_version') as get_version_mock, \
+                patch(_BUILTINS_PRINT) as print_mock:
+
+            get_version_mock.return_value = '100.500'
+            main()
+
+        self.assertTrue('100.500' in print_mock.call_args[0][0])
+
+    def test_main_prints_error_and_exists_if_there_are_problems(self):
+        with patch('apsconnectcli.apsconnect.fire') as fire_mock, \
+                patch('apsconnectcli.apsconnect.get_version'), \
+                patch(_BUILTINS_PRINT) as print_mock, \
+                patch('apsconnectcli.apsconnect.sys') as sys_mock:
+
+            fire_mock.Fire.side_effect = Exception('All is lost')
+            main()
+
+        self.assertTrue('All is lost' in print_mock.call_args[0][0])
+        sys_mock.exit.assert_called_once_with(1)

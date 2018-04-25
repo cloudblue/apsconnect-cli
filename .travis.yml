@@ -1,26 +1,70 @@
 language: python
-python:
-- '2.7'
-- '3.4'
-- '3.5'
-- '3.6'
+
+matrix:
+  include:
+    - os: linux
+      python: 2.7
+      env: BUILD=PYPI
+    - os: linux
+      python: 3.4
+    - os: linux
+      python: 3.5
+    - os: linux
+      sudo: required
+      python: 3.6
+      env: BUILD=LINUX
+    - os: osx
+      language: generic
+      env: BUILD=OSX
+
 before_install:
-- pip install --upgrade setuptools pip
+- ./.travis/before_install.sh
+
 install:
 - pip install -r requirements.txt
 - pip install -r test-requirements.txt
+- pip install pyinstaller
+
 script:
-- python setup.py flake8
+- if [[ $TRAVIS_OS_NAME == 'osx' ]]; then python3 setup.py flake8; fi
+- if [[ $TRAVIS_OS_NAME == 'linux' ]]; then python setup.py flake8; fi
 - nose2 --with-coverage --coverage apsconnectcli/ --coverage-report xml
+
 after_success:
-- bash <(curl -s https://codecov.io/bash)
+- ./.travis/after_success.sh
+
 deploy:
-  provider: pypi
-  user: apslite
-  password:
-    secure: wA5257WHW0hWAwr+G1iBNbAUsHrsErB1/bHAD3mNpGoxGZUqggLiF+oHjKkdk/kzpCjyuPArzwHgJ0yCtjjMaNDg7x3LQsbmKkxW+tYIPmMEbKyVNBUVU8CzCnd9ktJp0jP0MFyRlzSmbiqYbF/Zt+jRZgOy8g/oMYtnv3ZgCskKY2MiedMZP8WDp/6jGb28zXxJC9VBrrMx8HAxBx7QLf2ez3JtTm1KBnQ3T2HKXDzvuYyhgB7FtfY7AAC7R3LSqu49oXNSCZ5RjvtMYup3zg77YLcb3fHyTWlVV+QwItikDZCCqPuJyhzZ9CkZpvUrh9dJYbL2Rs9Fnqt0U+wQly1YlnKQ620fUwRvFPV3B4h2m12QBbup4YCFiGufwlk53Wg/R1DuUNCs0RXw0oj+R9jECEuKtcdy7r4dOLWM4In7BT0Uxi0YM33bQcFDVWPAAMCkXCpo8zMvDhsozXbntcPhGar7inWVGf9qpXZzFduGYK8mYaDyKAHD355DzZ3i8kzeMatQj55RZA0fdPRPElkdfq4O28nwIXzmHLTsKnv1InrdBnvoay9lh29MuTojIeQ2A7UTwgrL06LQAASKoL8WG/N6rIXWLolX1NLydlYX2HsvC8eSHoF8YJKWZhlfcFdsyh137+oAPk1o3QrOUt9CgbC3SMsOw14//51gK5k=
-  on:
-    tags: true
-    all_branches: true
-    distributions: sdist bdist_wheel
-    repo: ingrammicro/apsconnect-cli
+  - provider: releases
+    skip_cleanup: true
+    api_key:
+      secure: ovgNw6RwkcdXeD/NI6I+sSJutbr7PkgH5QQq3rDwcmBxu1kMn80EpqFYVe2NXBx493TlaO/+hA9WsCPDzyNVoFnt7xfJWE99K34/kQ8CKvKDYbu9EYvpul2U2uvDZx9a4M5ZxzaAInJrCDC348Dga4WCXl2yeLmyezIgpF3AxHiO+CJX3Lh7lod7P+U/3bRk1knBxtd4nMh8SABzpR+PX9qMnp2DQpb0ZAsm0jDkv5JXEuZW0a8bdcZwYLx4y1v8Hv70THkgl9dqG6FpUEFkG1ht4Peymr8voLdKHtl1fw/o7r9/+WFfZEwHkc4V7IGocDXyCRVuolQCiL5p4GxMwFB80zO9/LWGx8wgeVmVKXFGyLWurcP21FO9lbky3P/NeqsWyf6tPH7wCcsxl/Quw1LA2xk0xwdgwmffRMi9kXhi+JDkKM71CFVTGYlJFFd7zww5//tA15MPaD87vcQ151dnFD3yWlHGvonRNrVoWTQ5GSy/37/Gr70yt0zQz78HATT91BxN19wxAXpbxBqkoTcyDf80A7CmAwpA5BuVrzs7FNSXjZyWtJgPuSLYchmFHEhqjanEtBjM6CWFuACWkLK7Z+SYOhBHeQXOvvmSljEJzWGD7WCmsIiZyFxnHoUcb5MwsZIlltE6BmcqiAtIUNvonD4od/VLJjy7wzMLBLs=
+    file: dist/apsconnect-mac
+    on:
+      tags: true
+      all_branches: true
+      repo: ingrammicro/apsconnect-cli
+      condition: "$BUILD = OSX"
+
+  - provider: releases
+    skip_cleanup: true
+    api_key:
+      secure: ovgNw6RwkcdXeD/NI6I+sSJutbr7PkgH5QQq3rDwcmBxu1kMn80EpqFYVe2NXBx493TlaO/+hA9WsCPDzyNVoFnt7xfJWE99K34/kQ8CKvKDYbu9EYvpul2U2uvDZx9a4M5ZxzaAInJrCDC348Dga4WCXl2yeLmyezIgpF3AxHiO+CJX3Lh7lod7P+U/3bRk1knBxtd4nMh8SABzpR+PX9qMnp2DQpb0ZAsm0jDkv5JXEuZW0a8bdcZwYLx4y1v8Hv70THkgl9dqG6FpUEFkG1ht4Peymr8voLdKHtl1fw/o7r9/+WFfZEwHkc4V7IGocDXyCRVuolQCiL5p4GxMwFB80zO9/LWGx8wgeVmVKXFGyLWurcP21FO9lbky3P/NeqsWyf6tPH7wCcsxl/Quw1LA2xk0xwdgwmffRMi9kXhi+JDkKM71CFVTGYlJFFd7zww5//tA15MPaD87vcQ151dnFD3yWlHGvonRNrVoWTQ5GSy/37/Gr70yt0zQz78HATT91BxN19wxAXpbxBqkoTcyDf80A7CmAwpA5BuVrzs7FNSXjZyWtJgPuSLYchmFHEhqjanEtBjM6CWFuACWkLK7Z+SYOhBHeQXOvvmSljEJzWGD7WCmsIiZyFxnHoUcb5MwsZIlltE6BmcqiAtIUNvonD4od/VLJjy7wzMLBLs=
+    file:
+      - dist/apsconnect-lin
+      - dist/apsconnect.exe
+    on:
+      tags: true
+      all_branches: true
+      repo: ingrammicro/apsconnect-cli
+      condition: "$BUILD = LINUX"
+
+  - provider: pypi
+    user: apslite
+    password:
+      secure: wA5257WHW0hWAwr+G1iBNbAUsHrsErB1/bHAD3mNpGoxGZUqggLiF+oHjKkdk/kzpCjyuPArzwHgJ0yCtjjMaNDg7x3LQsbmKkxW+tYIPmMEbKyVNBUVU8CzCnd9ktJp0jP0MFyRlzSmbiqYbF/Zt+jRZgOy8g/oMYtnv3ZgCskKY2MiedMZP8WDp/6jGb28zXxJC9VBrrMx8HAxBx7QLf2ez3JtTm1KBnQ3T2HKXDzvuYyhgB7FtfY7AAC7R3LSqu49oXNSCZ5RjvtMYup3zg77YLcb3fHyTWlVV+QwItikDZCCqPuJyhzZ9CkZpvUrh9dJYbL2Rs9Fnqt0U+wQly1YlnKQ620fUwRvFPV3B4h2m12QBbup4YCFiGufwlk53Wg/R1DuUNCs0RXw0oj+R9jECEuKtcdy7r4dOLWM4In7BT0Uxi0YM33bQcFDVWPAAMCkXCpo8zMvDhsozXbntcPhGar7inWVGf9qpXZzFduGYK8mYaDyKAHD355DzZ3i8kzeMatQj55RZA0fdPRPElkdfq4O28nwIXzmHLTsKnv1InrdBnvoay9lh29MuTojIeQ2A7UTwgrL06LQAASKoL8WG/N6rIXWLolX1NLydlYX2HsvC8eSHoF8YJKWZhlfcFdsyh137+oAPk1o3QrOUt9CgbC3SMsOw14//51gK5k=
+    on:
+      tags: true
+      all_branches: true
+      distributions: sdist bdist_wheel
+      repo: ingrammicro/apsconnect-cli
+      condition: "$BUILD = PYPI"
