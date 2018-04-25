@@ -22,22 +22,24 @@ class Package(object):
     tempdir = None
     filename = None
     path = None
+    instance_only = False
 
     package_body = None
     meta_path = None
     tenant_schema_path = None
     app_schema_path = None
-    user_service = None
+    user_service = False
 
     connector_id = None
     connector_name = None
     version = None
     release = None
 
-    app_properties = None
-    tenant_properties = None
+    app_properties = {}
+    tenant_properties = {}
 
-    def __init__(self, source):
+    def __init__(self, source, instance_only=False):
+        self.instance_only = instance_only
         with TemporaryDirectory() as tempdir:
             self.source = source
             self.tempdir = tempdir
@@ -103,6 +105,9 @@ class Package(object):
     def _extract_files(self):
         with zipfile.ZipFile(self.path) as zip_ref:
             self.meta_path = zip_ref.extract('APP-META.xml', path=self.tempdir)
+            if self.instance_only:
+                return
+
             self.tenant_schema_path = zip_ref.extract('schemas/tenant.schema', self.tempdir)
             self.app_schema_path = zip_ref.extract('schemas/app.schema', self.tempdir)
 
@@ -126,6 +131,9 @@ class Package(object):
 
         url_path = urlparse(self.connector_id).path
         self.connector_name = os.path.split(url_path)[-1]
+
+        if self.instance_only:
+            return
 
         self.app_properties = Package._get_properties(self.app_schema_path)
         self.tenant_properties = Package._get_properties(self.tenant_schema_path)
