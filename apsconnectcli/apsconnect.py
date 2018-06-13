@@ -171,6 +171,7 @@ class APSConnectUtil:
                   .format(GITHUB_RELEASES_PAGE))
 
     def install_backend(self, name, image, config_file, hostname, healthcheck_path=None,
+                        docker_username=None, docker_password=None,
                         root_path='/', namespace='default', replicas=2,
                         tls_secret_name=None, force=False):
         """ Install connector-backend in the k8s cluster"""
@@ -209,8 +210,25 @@ class APSConnectUtil:
             print("Can't create config in cluster, error: {}".format(e))
             sys.exit(1)
 
+        # docker username and password both or none will be provided
+        if (docker_username and not docker_password) or \
+                (docker_password and not docker_username):
+            print("For Docker registry, make sure you have provided both "
+                  "docker username and password")
+            sys.exit(1)
+
+        image_pull_secret_key = None
+        # if docker username and password both are provided then only image pull secret key
+        # will be generated (else deploy without image pull secret key)
+        if docker_username and docker_password:
+            image_pull_secret_key = _create_image_pull_secret_key(name, image,
+                                                                  docker_username,
+                                                                  docker_password,
+                                                                  core_v1, namespace, force)
+
         try:
-            _create_deployment(name, image, ext_v1, healthcheck_path, replicas,
+            _create_deployment(name, image, ext_v1, image_pull_secret_key,
+                               healthcheck_path, replicas,
                                namespace, force, core_api=core_v1)
             print("Create deployment [ok]")
         except Exception as e:
@@ -384,7 +402,7 @@ def _delete_secret(name, api, namespace):
             raise
 
 
-def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
+def _create_deployment(name, image, api, image_pull_secret=None, healthcheck_path='/', replicas=2,
                        namespace='default', force=False, core_api=None):
     template = {
         'apiVersion': 'extensions/v1beta1',
@@ -460,6 +478,10 @@ def _create_deployment(name, image, api, healthcheck_path='/', replicas=2,
             },
         },
     }
+
+    if image_pull_secret:
+        image_pull_secret_tag = [{'name': image_pull_secret}]
+        template['spec']['template']['spec']['imagePullSecrets'] = image_pull_secret_tag
 
     if force:
         _delete_deployment(name, api=api, namespace=namespace, core_api=core_api)
@@ -737,6 +759,67 @@ def get_latest_version():
         return get(LATEST_RELEASE_URL, timeout=REQUEST_TIMEOUT).json()['tag_name'][1:]
     except:
         return None
+
+
+def _create_image_pull_secret_key(name, image, docker_username, docker_password,
+                                  core_v1, namespace='default', force=False):
+
+    try:
+        image_pull_secret = _create_image_pull_secret(name, docker_username,
+                                                      docker_password, image,
+                                                      core_v1, namespace, force)
+        print("Create image pull secret [ok]")
+        return image_pull_secret
+    except Exception as e:
+        print("Can't create image pull secret in cluster, error: {}".format(e))
+        sys.exit(1)
+
+
+def _create_image_pull_secret(name, username, password, endpoint,
+                              api, namespace='default', force=False):
+    try:
+        image_pull_secret = 'ips{0}'.format(name)
+        auth_password = '{0}:{1}'.format(username, password)
+        auth_password = str(base64.b64encode(_to_bytes(auth_password)))
+
+        secret = {
+            'auths': {
+                endpoint: {
+                    'username': username,
+                    'password': password,
+                    'email': 'none',
+                    'auth': auth_password,
+                }
+            }
+        }
+
+        secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
+
+        body = {
+            'api_version': 'v1',
+            'data': {
+                '.dockerconfigjson': secret_b64encode,
+            },
+            'kind': 'Secret',
+            'metadata': {
+                'name': image_pull_secret,
+                'namespace': namespace,
+            },
+            'type': 'kubernetes.io/dockerconfigjson',
+        }
+
+        if force:
+            _delete_secret(image_pull_secret, api, namespace)
+
+        api.create_namespaced_secret(
+            namespace=namespace,
+            body=body,
+        )
+    except Exception as e:
+        print("Error: {}".format(e))
+        raise e
+
+    return image_pull_secret
 
 
 def main():

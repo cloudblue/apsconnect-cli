@@ -71,7 +71,9 @@ Config saved [/Users/allexx/.aps_config]
 
 ```
 apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE --hostname HOSTNAME \
-                          [--healthcheck-path HEALTHCHECK_PATH] [--root-path ROOT_PATH] \
+                          [--healthcheck-path HEALTHCHECK_PATH] \
+                          [--docker-username DOCKER_USERNAME] [--docker-password DOCKER_PASSWORD] \
+                          [--root-path ROOT_PATH] \
                           [--namespace NAMESPACE] [--replicas REPLICAS] [--tls-secret-name TLS_SECRET_NAME] \
                           [--force FORCE]
 ```
