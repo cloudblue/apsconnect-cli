@@ -9,6 +9,8 @@ import copy
 import uuid
 import base64
 import warnings
+
+import jwt
 import pkg_resources
 from datetime import datetime, timedelta
 from distutils.util import strtobool
@@ -318,6 +320,11 @@ class APSConnectUtil:
         for (item_name, check_config, get_info) in [oa_hub_check, kube_check]:
             print(item_name)
             print(_check_binding(check_config, get_info))
+
+    def hub_info(self):
+        h = Hub()
+        res = {'uuid': h.hub_id, 'name': h.get_name()}
+        print(jwt.encode(res, None, algorithm=None))
 
 
 def _get_k8s_api_client(config_file=None):

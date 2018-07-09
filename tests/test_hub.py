@@ -162,6 +162,21 @@ class TestHub(TestCase):
             import_mock.assert_called()
             self.assertEqual(import_mock.call_args[1].get('package_body', ''), 'package_body')
 
+    def test_hub_name(self):
+        with patch('apsconnectcli.hub.osaapi'), \
+             patch('apsconnectcli.hub.APS') as aps_mock, \
+                patch('apsconnectcli.hub.get_config'), \
+                patch('apsconnectcli.hub.osaapi_raise_for_status'):
+            resp_mock = MagicMock()
+            resp_mock.content = b'[{"aps": {"id": "12345"}}]'
+            aps_mock.return_value.get.return_value = resp_mock
+
+            hub = Hub()
+            name_mock = MagicMock()
+            name_mock.content = b'[{"companyName": "testName", "aps": {"id": "12345"}}]'
+            aps_mock.return_value.get.return_value = name_mock
+            self.assertEqual(hub.get_name(), 'testName')
+
 
 class TestAPS(TestCase):
     def test_init(self):
