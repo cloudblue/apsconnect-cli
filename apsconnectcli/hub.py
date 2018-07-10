@@ -118,6 +118,19 @@ class Hub(object):
         else:
             return data[0]['aps']['id'] if data else None
 
+    def get_name(self):
+        url = 'aps/2/resources/?implementing(http://parallels.com/aps/types/pa/account/1.2),' \
+              'eq(type,ADMIN)'
+        r = self.aps.get(url)
+        r.raise_for_status()
+        try:
+            data = json.loads(r.content.decode('utf-8'))
+        except ValueError:
+            print("APSController provided non-json format")
+            sys.exit(1)
+        else:
+            return data[0]['companyName'] if data else None
+
     @staticmethod
     def info():
         if not os.path.exists(CFG_FILE_PATH):
