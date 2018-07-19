@@ -658,14 +658,16 @@ class CreateImagePullSecretTest(TestCase):
 
     def _create_image_pull_secret_body(self):
 
+        secret_b64encode = str('eyJhdXRocyI6IHsieHl6Lndvcmtlci5vZGluLnB3Ijo'
+                               'geyJ1c2VybmFtZSI6ICJ0ZXN0X3VzZXJuYW1lIiwgIn'
+                               'Bhc3N3b3JkIjogInRlc3RfcGFzc3dvcmQiLCAiZW1ha'
+                               'WwiOiAibm9uZSIsICJhdXRoIjogImRHVnpkRjkxYzJW'
+                               'eWJtRnRaVHAwWlhOMFgzQmhjM04zYjNKayJ9fX0=')
+
         body = {
             'api_version': 'v1',
             'data': {
-                '.dockerconfigjson': 'eyJhdXRocyI6IHsieHl6Lndvcmtlci5vZGluLnB3Ijo'
-                                     'geyJ1c2VybmFtZSI6ICJ0ZXN0X3VzZXJuYW1lIiwgIn'
-                                     'Bhc3N3b3JkIjogInRlc3RfcGFzc3dvcmQiLCAiZW1ha'
-                                     'WwiOiAibm9uZSIsICJhdXRoIjogImRHVnpkRjkxYzJW'
-                                     'eWJtRnRaVHAwWlhOMFgzQmhjM04zYjNKayJ9fX0=',
+                '.dockerconfigjson': secret_b64encode,
             },
             'kind': 'Secret',
             'metadata': {
