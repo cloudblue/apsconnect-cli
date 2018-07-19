@@ -781,10 +781,11 @@ def _create_image_pull_secret(name, username, password, endpoint,
         image_pull_secret = 'ips{0}'.format(name)
         auth_password = '{0}:{1}'.format(username, password)
         auth_password = str(base64.b64encode(_to_bytes(auth_password)))
+        auth_endpoint = endpoint.split('/')[0]
 
         secret = {
             'auths': {
-                endpoint: {
+                auth_endpoint: {
                     'username': username,
                     'password': password,
                     'email': 'none',
