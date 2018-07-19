@@ -656,36 +656,21 @@ class TestHelpers(TestCase):
 class CreateImagePullSecretTest(TestCase):
     """Tests for _create_image_pull_secret"""
 
-    def _create_image_pull_secret_body(self, name, username, password,
-                                       endpoint, namespace='default'):
-
-        image_pull_secret = 'ips{0}'.format(name)
-        auth_password = '{0}:{1}'.format(username, password)
-        auth_password = str(base64.b64encode(_to_bytes(auth_password)))
-        auth_endpoint = endpoint.split('/')[0]
-
-        secret = {
-            'auths': {
-                auth_endpoint: {
-                    'username': username,
-                    'password': password,
-                    'email': 'none',
-                    'auth': auth_password,
-                }
-            }
-        }
-
-        secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
+    def _create_image_pull_secret_body(self):
 
         body = {
             'api_version': 'v1',
             'data': {
-                '.dockerconfigjson': secret_b64encode,
+                '.dockerconfigjson': 'eyJhdXRocyI6IHsieHl6Lndvcmtlci5vZGluLnB3Ijo'
+                                     'geyJ1c2VybmFtZSI6ICJ0ZXN0X3VzZXJuYW1lIiwgIn'
+                                     'Bhc3N3b3JkIjogInRlc3RfcGFzc3dvcmQiLCAiZW1ha'
+                                     'WwiOiAibm9uZSIsICJhdXRoIjogImRHVnpkRjkxYzJW'
+                                     'eWJtRnRaVHAwWlhOMFgzQmhjM04zYjNKayJ9fX0=',
             },
             'kind': 'Secret',
             'metadata': {
-                'name': image_pull_secret,
-                'namespace': namespace,
+                'name': 'ipstest',
+                'namespace': 'default',
             },
             'type': 'kubernetes.io/dockerconfigjson',
         }
@@ -699,7 +684,8 @@ class CreateImagePullSecretTest(TestCase):
         endpoint = 'xyz.worker.odin.pw/test-repo:latest'
 
         fake_api = MagicMock()
-        test_body = self._create_image_pull_secret_body(name, username, password, endpoint, namespace)
+        test_body = self._create_image_pull_secret_body()
+        print(test_body)
 
         if namespace is not None:
             test_namespace = namespace
