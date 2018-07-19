@@ -657,12 +657,21 @@ class CreateImagePullSecretTest(TestCase):
     """Tests for _create_image_pull_secret"""
 
     def _create_image_pull_secret_body(self):
-        secret_b64encode = str(base64.b64encode(_to_bytes('{"auths": {"xyz.worker.odin.pw": '
-                                                          '{"username": "test_username", '
-                                                          '"password": "test_password", '
-                                                          '"email": "none", '
-                                                          '"auth": "dGVzdF91c2VybmFtZTp0ZXN'
-                                                          '0X3Bhc3N3b3Jk"}}}')))
+        auth_password = 'test_username:test_password'
+        auth_password = str(base64.b64encode(_to_bytes(auth_password)))
+
+        secret = {
+            'auths': {
+                'xyz.worker.odin.pw': {
+                    'username': 'test_username',
+                    'password': 'test_password',
+                    'email': 'none',
+                    'auth': auth_password,
+                }
+            }
+        }
+
+        secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
 
         body = {
             'api_version': 'v1',
@@ -687,7 +696,6 @@ class CreateImagePullSecretTest(TestCase):
 
         fake_api = MagicMock()
         test_body = self._create_image_pull_secret_body()
-        print(test_body)
 
         if namespace is not None:
             test_namespace = namespace
