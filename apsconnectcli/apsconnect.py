@@ -780,7 +780,7 @@ def _create_image_pull_secret(name, username, password, endpoint,
     try:
         image_pull_secret = 'ips{0}'.format(name)
         auth_password = '{0}:{1}'.format(username, password)
-        auth_password = str(base64.b64encode(_to_bytes(auth_password)))
+        auth_password = base64.b64encode(auth_password.encode('utf-8')).decode('utf-8')
         auth_endpoint = endpoint.split('/')[0]
 
         secret = {
@@ -794,7 +794,7 @@ def _create_image_pull_secret(name, username, password, endpoint,
             }
         }
 
-        secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
+        secret_b64encode = base64.b64encode(json.dumps(secret).encode('utf-8')).decode('utf-8')
 
         body = {
             'api_version': 'v1',

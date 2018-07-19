@@ -657,21 +657,10 @@ class CreateImagePullSecretTest(TestCase):
     """Tests for _create_image_pull_secret"""
 
     def _create_image_pull_secret_body(self):
-        auth_password = 'test_username:test_password'
-        auth_password = str(base64.b64encode(_to_bytes(auth_password)))
-
-        secret = {
-            'auths': {
-                'xyz.worker.odin.pw': {
-                    'username': 'test_username',
-                    'password': 'test_password',
-                    'email': 'none',
-                    'auth': auth_password,
-                }
-            }
-        }
-
-        secret_b64encode = str(base64.b64encode(_to_bytes(json.dumps(secret))))
+        secret_b64encode = 'eyJhdXRocyI6IHsieHl6Lndvcmtlci5vZGluLnB3IjogeyJ1c2VybmFtZSI6I' \
+                           'CJ0ZXN0X3VzZXJuYW1lIiwgInBhc3N3b3JkIjogInRlc3RfcGFzc3dvcmQiLC' \
+                           'AiZW1haWwiOiAibm9uZSIsICJhdXRoIjogImRHVnpkRjkxYzJWeWJtRnRaVHA' \
+                           'wWlhOMFgzQmhjM04zYjNKayJ9fX0='
 
         body = {
             'api_version': 'v1',
