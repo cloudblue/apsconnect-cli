@@ -29,7 +29,9 @@ def init_mocks(func):
     @patch('apsconnectcli.apsconnect._create_ingress')
     @patch('apsconnectcli.apsconnect._polling_service_access')
     @patch('apsconnectcli.apsconnect._check_connector_backend_access')
+    @patch('apsconnectcli.apsconnect._create_image_pull_secret')
     def mocked_fn(self,
+                  create_image_pull_secret,
                   check_connector_backend_access,
                   polling_service_access,
                   create_ingress,
@@ -53,6 +55,8 @@ class InstallBackendTest(TestCase):
     """Tests for apsconnect.install_backend"""
 
     _TEST_NAME = 'TEST NAME'
+    _TEST_DOCKER_USERNAME = 'test_username'
+    _TEST_DOCKER_PASSWORD = 'test_password'
 
     def _read_valid_json(self):
         return mock_open(read_data=FakeData.VALID_JSON)
@@ -65,7 +69,9 @@ class InstallBackendTest(TestCase):
                               name=self._TEST_NAME,
                               image='',
                               config_file=FakeData.CONFIG_PATH,
-                              hostname='localhost')
+                              hostname='localhost',
+                              docker_username=self._TEST_DOCKER_USERNAME,
+                              docker_password=self._TEST_DOCKER_PASSWORD)
             mock_file.assert_has_calls([call(FakeData.CONFIG_PATH)])
 
     def _check_internal_fn_causes_systemexit(self,
@@ -85,7 +91,9 @@ class InstallBackendTest(TestCase):
                                   name=self._TEST_NAME,
                                   image='',
                                   config_file=FakeData.CONFIG_PATH,
-                                  hostname='localhost')
+                                  hostname='localhost',
+                                  docker_username=self._TEST_DOCKER_USERNAME,
+                                  docker_password=self._TEST_DOCKER_PASSWORD)
                 mock_file.assert_has_calls([call(FakeData.CONFIG_PATH)])
                 mock_print.assert_called_with(expected_err_msg)
 
@@ -100,6 +108,7 @@ class InstallBackendTest(TestCase):
             self._TEST_NAME,
             '',
             mocks_dict['extensions_api'](),
+            None,
             path,
             2,
             FakeData.DEFAULT_NAMESPACE,
@@ -119,7 +128,9 @@ class InstallBackendTest(TestCase):
                                   name=self._TEST_NAME,
                                   image='',
                                   config_file=FakeData.CONFIG_PATH,
-                                  hostname='localhost')
+                                  hostname='localhost',
+                                  docker_username=self._TEST_DOCKER_USERNAME,
+                                  docker_password=self._TEST_DOCKER_PASSWORD)
                 err_msg = "Unable to read config file, error: {}".format(file_read_err_msg)
                 mock_print.assert_called_with(err_msg)
 
@@ -185,6 +196,13 @@ class InstallBackendTest(TestCase):
 
         exp_output = 'Check connector backend host error: {}'.format(FakeErrors.FAKE_ERR_MSG)
         self._check_internal_fn_causes_systemexit(mocks_dict, exp_output)
+
+    @init_mocks
+    def test_when_create_image_pull_secret_failed(self, mocks_dict):
+        err_txt = 'encoding or errors without a string argument'
+        mocks_dict['create_image_pull_secret'].side_effect = utils.create_fn_raising_error(err_txt)
+
+        self.assertRaises(SystemExit)
 
     @init_mocks
     def test_success_defaults(self, mocks_dict):

@@ -18,6 +18,8 @@ from apsconnectcli.apsconnect import (
     get_latest_version,
     main,
     APSConnectUtil,
+    _create_image_pull_secret,
+    _create_image_pull_secret_key
 )
 
 from apsconnectcli.cluster import AvailabilityCheckResult
@@ -163,8 +165,8 @@ class CreateDeploymentBaseTest(TestCase):
     _FAKE_DEL_OPTS = {'no-promt': True, 'recursive': True}
     _EXP_LBL_SEL = 'name={}'.format(_TEST_NAME)
 
-    def _create_test_body(self, name, replicas, image, healthcheck_path):
-        return {
+    def _create_test_body(self, name, replicas, image, healthcheck_path, image_pull_secret):
+        template = {
             'apiVersion': 'extensions/v1beta1',
             'kind': 'Deployment',
             'metadata': {
@@ -238,6 +240,12 @@ class CreateDeploymentBaseTest(TestCase):
             },
         }
 
+        if image_pull_secret:
+            image_pull_secret_tag = [{'name': image_pull_secret}]
+            template['spec']['template']['spec']['imagePullSecrets'] = image_pull_secret_tag
+
+        return template
+
     def _create_fake_core_v1_with_empty_pods(self):
         fake_core_v1 = MagicMock()
         fake_pods = MagicMock()
@@ -283,11 +291,12 @@ class CreateDeploymentBaseTest(TestCase):
         dummy_str = '1q2w3e4r5t!Q@W#E$R%T^Y'
         replicas_count = 2
         test_image = _to_bytes(dummy_str)
-        test_body = self._create_test_body(self._TEST_NAME, replicas_count, test_image, '/')
+        test_body = self._create_test_body(self._TEST_NAME, replicas_count, test_image, '/', None)
 
         _create_deployment(name=self._TEST_NAME,
                            image=test_image,
                            api=fake_ext_v1,
+                           image_pull_secret=None,
                            core_api=fake_core_v1,
                            force=is_force)
 
@@ -641,3 +650,74 @@ class TestHelpers(TestCase):
 
         self.assertTrue('All is lost' in print_mock.call_args[0][0])
         sys_mock.exit.assert_called_once_with(1)
+
+
+class CreateImagePullSecretTest(TestCase):
+    """Tests for _create_image_pull_secret"""
+
+    def _create_image_pull_secret_body(self):
+        secret_b64encode = 'eyJhdXRocyI6IHsieHl6Lndvcmtlci5vZGluLnB3IjogeyJ1c2VybmFtZSI6I' \
+                           'CJ0ZXN0X3VzZXJuYW1lIiwgInBhc3N3b3JkIjogInRlc3RfcGFzc3dvcmQiLC' \
+                           'AiZW1haWwiOiAibm9uZSIsICJhdXRoIjogImRHVnpkRjkxYzJWeWJtRnRaVHA' \
+                           'wWlhOMFgzQmhjM04zYjNKayJ9fX0='
+
+        body = {
+            'api_version': 'v1',
+            'data': {
+                '.dockerconfigjson': secret_b64encode,
+            },
+            'kind': 'Secret',
+            'metadata': {
+                'name': 'ipstest',
+                'namespace': 'default',
+            },
+            'type': 'kubernetes.io/dockerconfigjson',
+        }
+
+        return body
+
+    def test_create_image_pull_secret(self, namespace='default'):
+        name = 'test'
+        username = 'test_username'
+        password = 'test_password'
+        endpoint = 'xyz.worker.odin.pw/test-repo:latest'
+
+        fake_api = MagicMock()
+        test_body = self._create_image_pull_secret_body()
+
+        if namespace is not None:
+            test_namespace = namespace
+            _create_image_pull_secret(name=name,
+                                      username=username,
+                                      password=password,
+                                      endpoint=endpoint,
+                                      api=fake_api,
+                                      namespace=test_namespace)
+        else:
+            test_namespace = FakeData.DEFAULT_NAMESPACE
+            _create_image_pull_secret(name=name,
+                                      username=username,
+                                      password=password,
+                                      endpoint=endpoint,
+                                      api=fake_api)
+
+        fake_api.delete_namespaced_secret.assert_not_called()
+        fake_api.create_namespaced_secret.assert_called_once_with(namespace=test_namespace,
+                                                                  body=test_body)
+
+    def test_create_image_pull_secret_key(self, namespace='default'):
+        name = 'test'
+        image = 'xyz.worker.odin.pw/test:latest'
+        docker_username = 'QVdTOnBhc3N3b3Jk'
+        docker_password = 'abcdefg++hij'
+
+        fake_api = MagicMock()
+        with patch('apsconnectcli.apsconnect._create_image_pull_secret') as image_secret:
+            image_secret.return_value = 'ipstestkey'
+
+            _create_image_pull_secret_key(name=name,
+                                          image=image,
+                                          docker_username=docker_username,
+                                          docker_password=docker_password,
+                                          core_v1=fake_api,
+                                          namespace=namespace)
