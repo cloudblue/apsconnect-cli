@@ -662,10 +662,11 @@ class CreateImagePullSecretTest(TestCase):
         image_pull_secret = 'ips{0}'.format(name)
         auth_password = '{0}:{1}'.format(username, password)
         auth_password = str(base64.b64encode(_to_bytes(auth_password)))
+        auth_endpoint = endpoint.split('/')[0]
 
         secret = {
             'auths': {
-                endpoint: {
+                auth_endpoint: {
                     'username': username,
                     'password': password,
                     'email': 'none',
@@ -722,7 +723,7 @@ class CreateImagePullSecretTest(TestCase):
 
     def test_create_image_pull_secret_key(self, namespace='default'):
         name = 'test'
-        image = '123.dkr.ecr.region-1.amazonaws.com/test:latest'
+        image = 'xyz.worker.odin.pw/test:latest'
         docker_username = 'QVdTOnBhc3N3b3Jk'
         docker_password = 'abcdefg++hij'
 
