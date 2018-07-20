@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 import sys
 from pkg_resources import DistributionNotFound
@@ -656,10 +657,30 @@ class CreateImagePullSecretTest(TestCase):
     """Tests for _create_image_pull_secret"""
 
     def _create_image_pull_secret_body(self):
-        secret_b64encode = 'eyJhdXRocyI6IHsieHl6Lndvcmtlci5vZGluLnB3IjogeyJ1c2VybmFtZSI6I' \
-                           'CJ0ZXN0X3VzZXJuYW1lIiwgInBhc3N3b3JkIjogInRlc3RfcGFzc3dvcmQiLC' \
-                           'AiZW1haWwiOiAibm9uZSIsICJhdXRoIjogImRHVnpkRjkxYzJWeWJtRnRaVHA' \
-                           'wWlhOMFgzQmhjM04zYjNKayJ9fX0='
+        if sys.version_info < (3,) or sys.version_info >= (3, 6):
+            secret_b64encode = 'eyJhdXRocyI6IHsieHl6Lndvcmtlci5vZGluLnB3IjogeyJ1c2VybmFtZSI6I' \
+                               'CJ0ZXN0X3VzZXJuYW1lIiwgInBhc3N3b3JkIjogInRlc3RfcGFzc3dvcmQiLC' \
+                               'AiZW1haWwiOiAibm9uZSIsICJhdXRoIjogImRHVnpkRjkxYzJWeWJtRnRaVHA' \
+                               'wWlhOMFgzQmhjM04zYjNKayJ9fX0='
+        else:
+            # this block is for (3, 4) <= sys.version_info < (3, 6)
+            # it is done as python 3.4 and 3.5 change the sequence of json attributes
+            # different times and thus secret_b64encode in changing time to time
+            # hence not matched
+            auth_password = '{0}:{1}'.format('test_username', 'test_password')
+            auth_password = base64.b64encode(auth_password.encode('utf-8')).decode('utf-8')
+
+            secret = {
+                'auths': {
+                    'xyz.worker.odin.pw': {
+                        'username': 'test_username',
+                        'password': 'test_password',
+                        'email': 'none',
+                        'auth': auth_password,
+                    }
+                }
+            }
+            secret_b64encode = base64.b64encode(json.dumps(secret).encode('utf-8')).decode('utf-8')
 
         body = {
             'api_version': 'v1',
