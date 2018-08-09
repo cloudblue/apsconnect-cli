@@ -1,8 +1,17 @@
+import sys
 from unittest import TestCase
 
-from mock import MagicMock, patch
+from apsconnectcli.apsconnect import APSConnectUtil
+from apsconnectcli.hub import APS, Hub, osaapi_raise_for_status
 
-from apsconnectcli.hub import osaapi_raise_for_status, Hub, APS
+if sys.version_info >= (3,):
+    from unittest.mock import patch, MagicMock
+    _BUILTINS_OPEN = 'builtins.open'
+    _BUILTINS_PRINT = 'builtins.print'
+else:
+    from mock import patch, MagicMock
+    _BUILTINS_OPEN = 'apsconnectcli.apsconnect.open'
+    _BUILTINS_PRINT = 'apsconnectcli.apsconnect.print'
 
 
 class OsaApiRaiseForStatusTest(TestCase):
@@ -79,7 +88,7 @@ class TestHub(TestCase):
 
     def test_hub_init(self):
         with patch('apsconnectcli.hub.osaapi'), \
-             patch('apsconnectcli.hub.APS') as aps_mock, \
+                patch('apsconnectcli.hub.APS') as aps_mock, \
                 patch('apsconnectcli.hub.get_config'), \
                 patch('apsconnectcli.hub.osaapi_raise_for_status'):
             resp_mock = MagicMock()
@@ -104,7 +113,7 @@ class TestHub(TestCase):
 
     def test_hub_incorrect_id(self):
         with patch('apsconnectcli.hub.osaapi'), \
-             patch('apsconnectcli.hub.APS') as aps_mock, \
+                patch('apsconnectcli.hub.APS') as aps_mock, \
                 patch('apsconnectcli.hub.get_config'), \
                 patch('apsconnectcli.hub.osaapi_raise_for_status'), \
                 patch('apsconnectcli.hub.sys') as sys_mock:
@@ -244,3 +253,17 @@ class TestAPS(TestCase):
         self.assertEqual(requests_mock.delete.call_args[1].get('headers'), 'token')
         self.assertEqual(requests_mock.delete.call_args[1].get('verify'), False)
         self.assertEqual(requests_mock.delete.call_args[0][0], 'https://aps_host:aps_port/test')
+
+
+class TestApsConnectUtilHubCommands(TestCase):
+    @patch('apsconnectcli.apsconnect.Hub')
+    def test_hub_token(self, hub_cls):
+        with patch(_BUILTINS_PRINT) as mock_print:
+            expected_hub_token = '359b67d3-fdd7-4e90-a891-b909734fb64a'
+            hub_mock = MagicMock()
+            hub_mock.hub_id = expected_hub_token
+            hub_cls.return_value = hub_mock
+
+            util = APSConnectUtil()
+            util.hub_token()
+            mock_print.assert_called_with(expected_hub_token)

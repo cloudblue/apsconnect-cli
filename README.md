@@ -162,3 +162,9 @@ Disable mode with `--disable`.
 ⇒ apsconnect aps-devel-mode --disable
 APS Development mode DISABLED.
 ```
+
+#### Get Hub token
+ ```
+ ⇒ apsconnect hub-token
+ eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1dWlkIjoiZWVjYTQ2OGUtYTNjMy00OGZhLWEzYzYtZWNkNTUxNDgwZGM0IiwibmFtZSI6IkFQU0Nvbm5lY3QifQ.
+ ```
