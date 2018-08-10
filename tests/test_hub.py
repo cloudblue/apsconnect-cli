@@ -1,15 +1,15 @@
 import sys
 from unittest import TestCase
 
+from mock import MagicMock, patch
+
 from apsconnectcli.apsconnect import APSConnectUtil
 from apsconnectcli.hub import APS, Hub, osaapi_raise_for_status
 
 if sys.version_info >= (3,):
-    from unittest.mock import patch, MagicMock
     _BUILTINS_OPEN = 'builtins.open'
     _BUILTINS_PRINT = 'builtins.print'
 else:
-    from mock import patch, MagicMock
     _BUILTINS_OPEN = 'apsconnectcli.apsconnect.open'
     _BUILTINS_PRINT = 'apsconnectcli.apsconnect.print'
 
