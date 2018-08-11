@@ -13,6 +13,9 @@ matrix:
       sudo: required
       python: 3.6
       env: BUILD=LINUX
+    - os: osx
+      language: generic
+      env: BUILD=OSX
 
 before_install:
 - ./.travis/before_install.sh
