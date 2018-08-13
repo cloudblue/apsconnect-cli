@@ -166,5 +166,5 @@ APS Development mode DISABLED.
 #### Get Hub token
  ```
  ⇒ apsconnect hub-token
- eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1dWlkIjoiZWVjYTQ2OGUtYTNjMy00OGZhLWEzYzYtZWNkNTUxNDgwZGM0IiwibmFtZSI6IkFQU0Nvbm5lY3QifQ.
+ ab8719ff-d818-4b6f-8023-0229f768e086
  ```
