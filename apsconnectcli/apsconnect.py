@@ -18,13 +18,13 @@ import fire
 import yaml
 
 from requests import get
-from requests.exceptions import Timeout, ConnectionError, SSLError
+from requests.exceptions import ConnectionError, SSLError, Timeout
 
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 from apsconnectcli.action_logger import Logger
-from apsconnectcli.cluster import read_cluster_certificate, poll_deployment
+from apsconnectcli.cluster import poll_deployment, read_cluster_certificate
 from apsconnectcli.config import CFG_FILE_PATH, NULL_CFG_INFO
 from apsconnectcli.hub import Hub
 from apsconnectcli.package import Package
@@ -318,6 +318,10 @@ class APSConnectUtil:
         for (item_name, check_config, get_info) in [oa_hub_check, kube_check]:
             print(item_name)
             print(_check_binding(check_config, get_info))
+
+    def hub_token(self):
+        hub = Hub()
+        print(hub.hub_id)
 
 
 def _get_k8s_api_client(config_file=None):
