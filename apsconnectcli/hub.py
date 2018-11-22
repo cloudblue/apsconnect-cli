@@ -246,8 +246,6 @@ class Hub(object):
         return rt_ids
 
     def _create_user_rt(self, package, app_id):
-        if not package.user_service:
-            return {}
 
         user_resource_type_payload = {
             'resclass_name': 'rc.saas.service',

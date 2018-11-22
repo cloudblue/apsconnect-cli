@@ -28,7 +28,6 @@ class Package(object):
     meta_path = None
     tenant_schema_path = None
     app_schema_path = None
-    user_service = False
 
     connector_id = None
     connector_name = None
@@ -110,17 +109,6 @@ class Package(object):
 
             self.tenant_schema_path = zip_ref.extract('schemas/tenant.schema', self.tempdir)
             self.app_schema_path = zip_ref.extract('schemas/app.schema', self.tempdir)
-
-            def file_exists(filename):
-                try:
-                    zip_ref.extract(filename, self.tempdir)
-                except KeyError:
-                    return False
-                else:
-                    return True
-
-            self.user_service = any([file_exists('schemas/user.schema'),
-                                     file_exists('schemas/user.user.schema')])
 
     def _parse_metadata(self):
         tree = xml_et.ElementTree(file=self.meta_path)
