@@ -245,34 +245,6 @@ class Hub(object):
 
         return rt_ids
 
-    def _create_user_rt(self, package, app_id):
-        if not package.user_service:
-            return {}
-
-        user_resource_type_payload = {
-            'resclass_name': 'rc.saas.service',
-            'name': '{} users'.format(package.connector_name),
-            'act_params': [
-                {
-                    'var_name': 'app_id',
-                    'var_value': app_id
-                },
-                {
-                    'var_name': 'service_id',
-                    'var_value': 'user'
-                },
-                {
-                    'var_name': 'autoprovide_service',
-                    'var_value': '0'
-                },
-            ]
-        }
-
-        response = self.osaapi.addResourceType(**user_resource_type_payload)
-        osaapi_raise_for_status(response)
-
-        return {response['result']['resource_type_id']: -1}
-
     def _create_counter_rts(self, package, app_id):
         rt_ids = {}
         for counter, schema in package.counters.items():
@@ -332,7 +304,6 @@ class Hub(object):
 
     def create_rts(self, package, app_id, instance_uuid):
         rts = self._create_core_rts(package, app_id, instance_uuid)
-        rts.update(self._create_user_rt(package, app_id))
         rts.update(self._create_counter_rts(package, app_id))
         rts.update(self._create_parameter_rts(package, app_id))
         return rts
