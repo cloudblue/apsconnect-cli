@@ -1,27 +1,22 @@
 from __future__ import print_function
 
+import base64
+import copy
 import json
 import os
 import sys
-import time
 import tempfile
-import copy
 import uuid
-import base64
 import warnings
-import pkg_resources
-from datetime import datetime, timedelta
 from distutils.util import strtobool
-from six.moves import input
 
 import fire
+import pkg_resources
 import yaml
-
-from requests import get
-from requests.exceptions import ConnectionError, SSLError, Timeout
-
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
+from requests import get
+from six.moves import input
 
 from apsconnectcli.action_logger import Logger
 from apsconnectcli.cluster import poll_deployment, read_cluster_certificate

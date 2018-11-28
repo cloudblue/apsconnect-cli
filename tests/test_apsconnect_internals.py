@@ -1,8 +1,9 @@
 import base64
 import os
 import sys
-from pkg_resources import DistributionNotFound
 from unittest import TestCase
+
+from pkg_resources import DistributionNotFound
 
 from apsconnectcli.apsconnect import (
     GITHUB_RELEASES_PAGE,
@@ -19,11 +20,9 @@ from apsconnectcli.apsconnect import (
     main,
     APSConnectUtil,
 )
-
 from apsconnectcli.cluster import AvailabilityCheckResult
-
-from tests.fakes import FakeData, FakeK8sApi
 from tests import utils
+from tests.fakes import FakeData, FakeK8sApi
 
 if sys.version_info >= (3,):
     from unittest.mock import patch, call, MagicMock
