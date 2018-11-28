@@ -67,7 +67,7 @@ Connectivity with hub APS API [ok]
 Config saved [/Users/allexx/.aps_config]
 ```
 
-#### 3. Install connector-frontend in Odin Automation Hub
+#### 3 Install connector-frontend in Odin Automation Hub
 
 ```
 apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
