@@ -67,39 +67,7 @@ Connectivity with hub APS API [ok]
 Config saved [/Users/allexx/.aps_config]
 ```
 
-#### 3. Install connector-backend in the k8s cluster
-
-```
-apsconnect install-backend --name NAME --image IMAGE --config-file CONFIG_FILE --hostname HOSTNAME \
-                          [--healthcheck-path HEALTHCHECK_PATH] [--root-path ROOT_PATH] \
-                          [--namespace NAMESPACE] [--replicas REPLICAS] [--tls-secret-name TLS_SECRET_NAME] \
-                          [--force FORCE]
-```
-`Hostname` is the address to access your connector.
-
-`Tls-secret-name` is the name of the certificate in Ingress for the specified hostname.
-If the certificate doesn't exist, you can install [kube-lego](https://github.com/jetstack/kube-lego) to request and renew certificates automatically.
-
-```
-⇒  apsconnect install-backend connector_name image hostname config_file
-APSConnect-cli v.1.7.11
-Loading config file: /Users/allexx/config_file
-Connect https://xxx [ok]
-Create config [ok]
-Create deployment [ok]
-Create service [ok]
-Create ingress [ok]
-Checking service availability
-..
-Expose service [ok]
-Checking connector backend availability
-.....
-Check connector backend host [ok]
-Connector backend - https://xxx
-[Success]
-```
-
-#### 4. Install connector-frontend in Odin Automation Hub
+#### 3. Install connector-frontend in Odin Automation Hub
 
 ```
 apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
