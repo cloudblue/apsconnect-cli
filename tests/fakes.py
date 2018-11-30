@@ -2,16 +2,6 @@ import json
 import yaml
 
 
-class FakeK8sApi(object):
-    def __init__(self, is_no_connection=False):
-        self.is_no_connection = is_no_connection
-
-    def get_code(self):
-        if self.is_no_connection:
-            raise Exception('K8s-host refused connection.')
-        return 0
-
-
 class FakeData:
     SCHEMA_PATH = '/tmp/schema'
     CONFIG_PATH = '/tmp/fake_config'
