@@ -31,27 +31,9 @@ CentOS 7.2 provide outdated Python 2.7.5 release, so you'll need an additional s
     pip install -U apsconnectcli
     ```
 
-### How to setup a kubernetes cluster
-[Read a good step-by-step instruction by JetStack team](https://github.com/jetstack/kube-lego/tree/master/examples/nginx)
-
 ## Usage
 
-#### 1 Connect your kubernetes (k8s) cluster
-
-```
-apsconnect init-cluster --cluster-endpoint CLUSTER_ENDPOINT \
-                        --user USER --pwd PWD --ca-cert CA_CERT_FILE
-```
-
-```
-⇒  apsconnect init-cluster k8s.cluster.host k8s-admin password ./my-k8s-cert.pem
-APSConnect-cli v.1.7.11
-Connectivity with k8s cluster api [ok]
-k8s cluster version - v1.5.6
-Config saved [/Users/allexx/.kube/config]
-```
-
-#### 2 Connect your Odin Automation Hub
+#### 1 Connect your Odin Automation Hub
 
 ```
 apsconnect init-hub --hub-host HUB_HOST [--user USER] [--pwd PWD] \
@@ -67,7 +49,7 @@ Connectivity with hub APS API [ok]
 Config saved [/Users/allexx/.aps_config]
 ```
 
-#### 3 Install connector-frontend in Odin Automation Hub
+#### 2 Install connector-frontend in Odin Automation Hub
 
 ```
 apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
@@ -112,12 +94,6 @@ Secret:   14089074ca9a4abd80ba45a19baae693
 
 _Note that `--source` gets http(s):// or filepath argument._
 
-#### Validate the k8s cluster and grab some useful data
-```
-⇒ apsconnect check-backend
-Connect https://xxx [ok]
-Service nginx-ingress-controller IP x.x.x.x
-```
 
 #### Enable APS Development mode
 Allows using non-TLS connector-backend URL and [other features for debug](http://doc.apsstandard.org/2.2/process/test/tools/mn/#development-mode).
