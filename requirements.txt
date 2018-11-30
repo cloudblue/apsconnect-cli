@@ -1,9 +1,7 @@
 fire==0.1.2
 future==0.16.0
 osaapi==0.3.12
-requests==2.13.0
+requests==2.20.1
 PyYAML==3.13
-kubernetes==1.0.0
 six==1.11.0
 backports.tempfile==1.0
-requests==2.13.0
