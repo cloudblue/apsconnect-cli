@@ -5,12 +5,12 @@ from apsconnectcli.package import Package
 from tests.fakes import FakeData
 
 if sys.version_info >= (3,):
-    from unittest.mock import patch, MagicMock, mock_open
+    from unittest.mock import patch, mock_open
 
     _BUILTINS_OPEN = 'builtins.open'
     _BUILTINS_PRINT = 'builtins.print'
 else:
-    from mock import patch, MagicMock, mock_open
+    from mock import patch, mock_open
 
     _BUILTINS_OPEN = 'apsconnectcli.package.open'
     _BUILTINS_PRINT = 'apsconnectcli.package.print'
