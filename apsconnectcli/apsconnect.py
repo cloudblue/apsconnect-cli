@@ -112,13 +112,9 @@ class APSConnectUtil:
         Hub().aps_devel_mode(disable)
 
     def info(self):
-        """ Show current state of apsconnect-cli binding with Kubernetes cluster and OA Hub"""
-
-        oa_hub_check = ("OA Hub:", lambda: os.path.exists(CFG_FILE_PATH), Hub.info())
-
-        for (item_name, check_config, get_info) in [oa_hub_check]:
-            print(item_name)
-            print(_check_binding(check_config, get_info))
+        """ Show current state of apsconnect-cli binding with OA Hub"""
+        print("OA Hub:")
+        print(_check_binding(lambda: os.path.exists(CFG_FILE_PATH),  _get_hub_info))
 
     def hub_token(self):
         hub = Hub()
@@ -156,6 +152,18 @@ def _check_binding(check_config, get_config_info):
     else:
         host, user = info
         return state_is_ready.format(host, user)
+
+
+def _get_hub_info():
+    if not os.path.exists(CFG_FILE_PATH):
+        return NULL_CFG_INFO
+
+    with open(CFG_FILE_PATH) as f:
+        hub_cfg = json.load(f)
+
+    host = "{}:{}".format(hub_cfg['host'], hub_cfg['port'])
+    user = hub_cfg['user']
+    return (host, user)
 
 
 def bin_version():

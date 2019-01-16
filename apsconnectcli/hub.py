@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import json
-import os
 import re
 import sys
 import uuid
@@ -11,7 +10,7 @@ from xml.etree import ElementTree as xml_et
 import osaapi
 import requests
 
-from apsconnectcli.config import get_config, CFG_FILE_PATH, NULL_CFG_INFO
+from apsconnectcli.config import get_config, CFG_FILE_PATH
 
 RPC_CONNECT_PARAMS = ('host', 'user', 'password', 'ssl', 'port')
 APS_CONNECT_PARAMS = ('aps_host', 'aps_port', 'use_tls_aps')
@@ -117,18 +116,6 @@ class Hub(object):
             sys.exit(1)
         else:
             return data[0]['aps']['id'] if data else None
-
-    @staticmethod
-    def info():
-        if not os.path.exists(CFG_FILE_PATH):
-            return NULL_CFG_INFO
-
-        with open(CFG_FILE_PATH) as f:
-            hub_cfg = json.load(f)
-
-        host = '{}:{}'.format(hub_cfg['host'], hub_cfg['port'])
-        user = hub_cfg['user']
-        return host, user
 
     def get_admin_token(self):
         return Hub._get_user_token(self.osaapi, 1)
