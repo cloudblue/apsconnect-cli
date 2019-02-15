@@ -4,13 +4,12 @@ import json
 import re
 import sys
 import uuid
-
 from xml.etree import ElementTree as xml_et
 
 import osaapi
 import requests
 
-from apsconnectcli.config import get_config, CFG_FILE_PATH
+from apsconnectcli.config import CFG_FILE_PATH, get_config
 
 RPC_CONNECT_PARAMS = ('host', 'user', 'password', 'ssl', 'port')
 APS_CONNECT_PARAMS = ('aps_host', 'aps_port', 'use_tls_aps')
