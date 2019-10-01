@@ -110,7 +110,7 @@ class TestHelpers(TestCase):
 
     def test_main_prints_version(self):
         with patch('apsconnectcli.apsconnect.fire'), \
-             patch('apsconnectcli.apsconnect.get_version') as get_version_mock, \
+                patch('apsconnectcli.apsconnect.get_version') as get_version_mock, \
                 patch(_BUILTINS_PRINT) as print_mock:
 
             get_version_mock.return_value = '100.500'

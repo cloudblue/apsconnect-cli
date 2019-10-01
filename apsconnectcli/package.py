@@ -3,7 +3,6 @@ import os
 import sys
 import zipfile
 from xml.etree import ElementTree as xml_et
-from future.moves.urllib.parse import urlparse
 
 from shutil import copyfile
 
