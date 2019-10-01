@@ -117,8 +117,7 @@ class Package(object):
         self.version = tree.find('{}version'.format(ns)).text
         self.release = tree.find('{}release'.format(ns)).text
 
-        url_path = urlparse(self.connector_id).path
-        self.connector_name = os.path.split(url_path)[-1]
+        self.connector_name = tree.find('{}name'.format(ns)).text
 
         if self.instance_only:
             return
