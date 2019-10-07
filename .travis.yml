@@ -56,9 +56,9 @@ deploy:
       condition: "$BUILD = LINUX"
 
   - provider: pypi
-    user: apslite
+    user: "__token__"
     password:
-      secure: Io3J3JjaumyIYetMV1jgPviQK9izAnU+Ok1LEjqGgg+3WiCy7eHjEVXOeLYy5hgv7UXgRIEqEN9DdZFGRnYvcf7MJqzeXilNNOBx7Y1L6pvpqhlJUHf7nEnJJ1002JBON6OvuMFDNxwAMVDVibZvGIMdRuFDBuHXmzvQFcyScwb0IK+0pnuxQx9y4GTZyZUNn2rmgLzmu7gkY6VcKnG1Knvs/PORGdYH7/XBRjiYgVKipAEns91ot18bs53GRKNSt6WfDBnjPjcH/mLMm4RNc0JbfK+WgQt+hj1UaJgwTZaOqcWOPB5EGjvc5ADP50eOyiDeyPLtrAYoSGwBqCeCoKSQ8bmuqkTxa1Ou2j2zUwyiA9hk2LG/VunhD7yaWxJPI2kTuGW91YWCK731W7C8Awb0gpFh7qA9PFcE9gkkJwh4c8aIJexDWxAx8+7BFFdNsjJf2phNzzgBl9LYcLPcVyNvtUr1YpqZGWGzlvrXdn0an1RmzN7vJhUZkwHEHpttj/M25YEcm1MVKyQhMxqiJwcYBc2qvIIHIWH3B/lxEp3vUk3nI5TfwMbozI4DavHD2oTnuSzNjqG6OOQnR8RGiBfZaZJyQeVgu4dvazVJeSpbxRJhK0Zh3XYJXisOar75vYZAjBh6TTL8H/LOWlg+pYAvH1QV5EQIVQN/08npnIc=
+      secure: pypi-AgEIcHlwaS5vcmcCJDJkNTA1YjE4LWQzZGQtNDkyYy1hY2NmLTFmZDlhNjFhZjlmNwACPnsicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJhcHNjb25uZWN0Y2xpIl19LCAidmVyc2lvbiI6IDF9AAAGIEyaTWtxWpqFiDXOnzKi8Xr7R6KJkojLtcWcrf_Bcbxs
     on:
       tags: true
       all_branches: true
