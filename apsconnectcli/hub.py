@@ -193,7 +193,7 @@ class Hub(object):
         core_resource_types_payload = [
             {
                 'resclass_name': 'rc.saas.service.link',
-                'name': package.connector_name,
+                'name': '{} app instance'.format(package.connector_name),
                 'act_params': [
                     {
                         'var_name': 'app_id',
@@ -235,9 +235,10 @@ class Hub(object):
     def _create_counter_rts(self, package, app_id):
         rt_ids = {}
         for counter, schema in package.counters.items():
+            oa_unit_type = Hub._get_resclass_name(schema['unit'])
             payload = {
-                'resclass_name': Hub._get_resclass_name(schema['unit']),
-                'name': '{} {}'.format(package.connector_name, counter),
+                'resclass_name': oa_unit_type,
+                'name': '{}'.format(schema.get('title')),
                 'act_params': [
                     {
                         'var_name': 'app_id',
@@ -256,7 +257,10 @@ class Hub(object):
 
             response = self.osaapi.addResourceType(**payload)
             osaapi_raise_for_status(response)
-            rt_ids[response['result']['resource_type_id']] = -1
+            if oa_unit_type == "rc.saas.resource.unith" or oa_unit_type == "rc.saas.resource.mhzh":
+                rt_ids[response['result']['resource_type_id']] = -1
+            else:
+                rt_ids[response['result']['resource_type_id']] = 0
 
         return rt_ids
 

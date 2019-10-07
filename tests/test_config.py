@@ -48,7 +48,7 @@ class GetCfgTest(TestCase):
 
     def test_file_unreadable(self):
         with patch(_BUILTINS_OPEN), \
-             patch(_BUILTINS_PRINT) as print_mock, \
+                patch(_BUILTINS_PRINT) as print_mock, \
                 patch('apsconnectcli.config.json') as json_mock, \
                 patch('apsconnectcli.config.sys') as sys_mock:
             json_mock.load.side_effect = ValueError()
@@ -62,7 +62,7 @@ class GetCfgTest(TestCase):
 
     def test_unexpected_error(self):
         with patch(_BUILTINS_OPEN), \
-             patch(_BUILTINS_PRINT) as print_mock, \
+                patch(_BUILTINS_PRINT) as print_mock, \
                 patch('apsconnectcli.config.json') as json_mock, \
                 patch('apsconnectcli.config.sys') as sys_mock:
             json_mock.load.side_effect = Exception("All is lost")
@@ -75,7 +75,7 @@ class GetCfgTest(TestCase):
 
     def test_ok(self):
         with patch(_BUILTINS_OPEN), \
-             patch(_BUILTINS_PRINT) as print_mock, \
+                patch(_BUILTINS_PRINT) as print_mock, \
                 patch('apsconnectcli.config.json') as json_mock, \
                 patch('apsconnectcli.config.sys') as sys_mock:
             json_mock.load.return_value = 'Config data'
