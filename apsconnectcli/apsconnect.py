@@ -58,7 +58,7 @@ class APSConnectUtil:
                   .format(GITHUB_RELEASES_PAGE))
 
     def install_frontend(self, source, oauth_key, oauth_secret, backend_url, settings=None,
-                         network='proxy', hub_id=None, instance_only=False):
+                         network='proxy', hub_id=None, instance_only=False, force_counters=False):
         """ Install connector-frontend in Odin Automation Hub, --source can be http(s):// or
         filepath"""
 
@@ -89,7 +89,7 @@ class APSConnectUtil:
             return
 
         # Create resource types
-        resource_types = hub.create_rts(package, application_id, instance_uuid)
+        resource_types = hub.create_rts(package, application_id, instance_uuid, force_counters)
         print("Resource types creation completed [ok]")
 
         # Create service template

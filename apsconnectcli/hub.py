@@ -4,7 +4,6 @@ import json
 import re
 import sys
 import uuid
-
 from xml.etree import ElementTree as xml_et
 
 import osaapi
@@ -14,6 +13,8 @@ from apsconnectcli.config import get_config, CFG_FILE_PATH
 
 RPC_CONNECT_PARAMS = ('host', 'user', 'password', 'ssl', 'port')
 APS_CONNECT_PARAMS = ('aps_host', 'aps_port', 'use_tls_aps')
+APS_CONNECT_SERVICE_PROFILE_TYPE_POSTFIX = "auto_profile/service/1.0"
+APS_CONNECT_RESELLER_PROFILE_TYPE_POSTFIX = "auto_profile/reseller/1.0"
 
 
 def osaapi_raise_for_status(r):
@@ -22,6 +23,19 @@ def osaapi_raise_for_status(r):
             raise Exception("Error: {}".format(r['error_message']))
         else:
             raise Exception("Error: Unknown {}".format(r))
+
+
+def apsapi_raise_for_status(r):
+    try:
+        r.raise_for_status()
+    except Exception as e:
+        if 'error' in r.json():
+            err = "{} {}".format(r.json()['error'], r.json()['message'])
+        else:
+            err = str(e)
+        print("Hub APS API response {} code.\n"
+              "Error: {}".format(r.status_code, err))
+        sys.exit(1)
 
 
 class Hub(object):
@@ -232,6 +246,104 @@ class Hub(object):
 
         return rt_ids
 
+    def _get_package(self, instance_uuid):
+        r = self.aps.get('aps/2/resources/{}'.format(instance_uuid))
+        apsapi_raise_for_status(r)
+        return r.json()['aps']['package']['id']
+
+    def _is_service_profile_supported(self, instance_uuid):
+        package_uuid = self._get_package(instance_uuid)
+        r = self.aps.get('aps/2/packages/{}'.format(package_uuid))
+        apsapi_raise_for_status(r)
+        services = r.json()['services']
+        if 'auto-service-profile' in services.keys():
+            return True
+        return False
+
+    def _create_service_profile(self, connector_id, counter, title):
+        payload = {
+            'aps': {'type': '{}/{}'.format(
+                connector_id, APS_CONNECT_SERVICE_PROFILE_TYPE_POSTFIX)},
+            'profileName': title,
+            'mpn': counter
+        }
+
+        r = self.aps.post('aps/2/resources/', json=payload)
+        try:
+            r.raise_for_status()
+        except Exception as e:
+            if 'error' in r.json():
+                err = "{} {}".format(r.json()['error'], r.json()['message'])
+            else:
+                err = str(e)
+            print("Adding service profile {} FAILED.\n"
+                  "Hub APS API response {} code.\n"
+                  "Error: {}".format(counter, r.status_code, err))
+            sys.exit(1)
+
+        return r.json()['aps']['id']
+
+    def _create_reseller_profile(self, connector_id):
+        payload = {
+            'aps': {'type': '{}/{}'.format(
+                connector_id, APS_CONNECT_RESELLER_PROFILE_TYPE_POSTFIX)},
+            'vendorContract': '',
+        }
+
+        r = self.aps.post('aps/2/resources/', json=payload)
+        apsapi_raise_for_status(r)
+        return r.json()['aps']['id']
+
+    def _create_counted_ref_rts(self, package, app_id):
+        rt_ids = {}
+        for counter, schema in package.counters.items():
+            title = schema.get('title')
+            resource_uid = self._create_service_profile(package.connector_id, counter, title)
+            payload = {
+                'resclass_name': 'rc.saas.countedlenk',
+                'name': title,
+                'act_params': [
+                    {
+                        'var_name': 'app_id',
+                        'var_value': app_id
+                    },
+                    {
+                        'var_name': 'resource_uid',
+                        'var_value': resource_uid
+                    }
+                ]
+            }
+
+            response = self.osaapi.addResourceType(**payload)
+            osaapi_raise_for_status(response)
+            rt_ids[response['result']['resource_type_id']] = 0
+
+        return rt_ids
+
+    def _create_reseller_link_rt(self, package, app_id):
+        rt_ids = {}
+        resource_uid = self._create_reseller_profile(package.connector_id)
+        payload = {
+            'resclass_name': 'rc.saas.service.link',
+            'name': 'Vendor Contract ID',
+            'act_params': [
+                {
+                    'var_name': 'app_id',
+                    'var_value': app_id
+                },
+                {
+                    'var_name': 'resource_uid',
+                    'var_value': resource_uid
+                }
+            ]
+        }
+
+        response = self.osaapi.addResourceType(**payload)
+        osaapi_raise_for_status(response)
+        rt_ids[response['result']['resource_type_id']] = 0
+
+        return rt_ids
+
     def _create_counter_rts(self, package, app_id):
         rt_ids = {}
         for counter, schema in package.counters.items():
@@ -293,9 +405,13 @@ class Hub(object):
 
         return rt_ids
 
-    def create_rts(self, package, app_id, instance_uuid):
+    def create_rts(self, package, app_id, instance_uuid, force_counters):
         rts = self._create_core_rts(package, app_id, instance_uuid)
-        rts.update(self._create_counter_rts(package, app_id))
+        if self._is_service_profile_supported(instance_uuid) and not force_counters:
+            rts.update(self._create_counted_ref_rts(package, app_id))
+            rts.update(self._create_reseller_link_rt(package, app_id))
+        else:
+            rts.update(self._create_counter_rts(package, app_id))
         rts.update(self._create_parameter_rts(package, app_id))
         return rts
 
