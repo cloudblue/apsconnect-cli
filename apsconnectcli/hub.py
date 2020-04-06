@@ -183,7 +183,7 @@ class Hub(object):
         elif int(latest) > int(package.version):
             print("ERROR: Is not possible to import a version older than existing one at hub")
             sys.exit(1)
-        print("INFO: Upgrade operation from version {} to version {} required".format(latest,
+        print("Upgrade operation from version {} to version {} required".format(latest,
                                                                                 package.version))
         return "upgrade"
 
