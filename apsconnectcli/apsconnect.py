@@ -144,10 +144,13 @@ class APSConnectUtil:
             hub.apply_st_limits(service_template_id, resource_types)
             print("Limits for Service template \"{}\" are applied [ok]".format(service_template_id))
         else:
-            print(
-                "INFO: Modification of existing Service Template is not possible by this tool.\n" +
-                "Please use Configure button on application instance in order to add \n" +
-                "created resources into your existing service templates and plans")
+            print('''
+            The operation completed successfully. 
+
+Please note that current version of this utility dos not support modifications of existing Service 
+Templates (STs). In case you need additional resources to be added to one or multiple STs, please 
+use 'Configure Product' button at the Provider Control Panel > Applications >  Instance details 
+screen and choose the 'Run wizard and go though all configuration steps' option.''')
 
     def generate_oauth(self, namespace=''):
         """ Helper for Oauth credentials generation"""

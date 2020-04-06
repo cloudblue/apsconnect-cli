@@ -181,9 +181,9 @@ class Hub(object):
         if int(latest) == int(package.version):
             return "createRTs"
         elif int(latest) > int(package.version):
-            print("Is not possible to import a version older than existing one at hub")
+            print("ERROR: Is not possible to import a version older than existing one at hub")
             sys.exit(1)
-        print("Upgrade operation from version {} to version {} required".format(latest,
+        print("INFO: Upgrade operation from version {} to version {} required".format(latest,
                                                                                 package.version))
         return "upgrade"
 
@@ -323,7 +323,7 @@ class Hub(object):
             sys.exit(1)
         if data.get('local_id'):
             return data
-        print("ERROR: Connector contains non valid items, please contact CloudBlue Support")
+        print("ERROR: Connector contains non valid items, please contact CloudBlue Connect Support")
         sys.exit(1)
 
     def _create_service_profile(self, package, counter, title):
@@ -344,7 +344,7 @@ class Hub(object):
                 err = "{} {}".format(r.json()['error'], r.json()['message'])
             else:
                 err = str(e)
-            print("Adding service profile {} FAILED.\n"
+            print("ERROR: Adding service profile {} FAILED.\n"
                   "Hub APS API response {} code.\n"
                   "Error: {}".format(counter, r.status_code, err))
             sys.exit(1)
@@ -652,7 +652,7 @@ class Hub(object):
             data = json.loads(r.content.decode('utf-8'))
             if data.get('id'):
                 return data
-            print("ERROR: Product {} has no connection for this HUB.\n".format(product_id) +
+            print("ERROR: Product {} has no connection to this HUB.\n".format(product_id) +
                   "Please access CloudBlue Connect provider panel to create a new one")
             exit(1)
 
