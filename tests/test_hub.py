@@ -50,13 +50,13 @@ class OsaApiRaiseForStatusTest(TestCase):
 class TestHub(TestCase):
     def test_supported_version(self):
         with patch('apsconnectcli.hub.sys') as sys_mock:
-            _assert_supported_version('oa-8.2-1216')
+            HUB._assert_supported_version('oa-8.2-1216')
 
             sys_mock.exit.assert_not_called()
 
     def test_unsupported_version(self):
         with patch('apsconnectcli.hub.sys') as sys_mock:
-            _assert_supported_version('oa-7.0-1216')
+            HUB._assert_supported_version('oa-7.0-1216')
 
             sys_mock.exit.assert_called_with(1)
 
