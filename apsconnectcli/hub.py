@@ -89,19 +89,37 @@ class Hub(object):
     def _assert_supported_version(version, experimental=False):
         supported = False
 
-        match = re.match(r'^(oa|cb)-(?P<major>\d)\.(?P<minor>\d+)-', version)
+        match = re.match(r'^(?P<oamajor>oa-8)|(?P<cbmajor>cb-20)\.(?P<minor>\d+)-', version)
         if match:
-            major = int(match.groupdict()['major'])
+            '''
+            Supported versions:
+            OA-8.0 or upper on counter mode
+            OA-8.3 or upper in experimental mode
+            CB-20.5 in any mode
+            '''
+            if match.groupdict()['oamajor']:
+                oamajor = int(match.groupdict()['oamajor'].replace('oa-',''))
+            else:
+                oamajor = 0
+
+            if match.groupdict()['cbmajor']:
+                cbmajor = int(match.groupdict()['cbmajor'].replace('cb-',''))
+            else:
+                cbmajor = 0
             minor = int(match.groupdict()['minor'])
             if experimental:
-                supported = (major >= 8 and minor >= 3) or major > 8
+                supported = (oamajor >= 8 and minor >= 3)\
+                            or (cbmajor >= 20 and minor >= 5)\
+                            or cbmajor > 20
                 if not supported:
                     print(
                         "Experimental functionality requires Hub version 8.3 " +
                         "and above, got {}".format(version))
                     sys.exit(1)
             else:
-                supported = (major == 8 and minor > 0) or major > 8
+                supported = (oamajor >= 8 and minor >= 0)\
+                            or (cbmajor >= 20 and minor >= 5)\
+                            or cbmajor > 20
 
         if not supported:
             print("Hub 8.0 version or above needed, got {}".format(version))
@@ -304,9 +322,9 @@ class Hub(object):
         apsapi_raise_for_status(r)
         services = r.json()['services']
         if 'itemProfile' in services.keys():
-            print("INFO: Service Profile is Supported")
+            print("INFO: Item Profile is Supported")
             return True
-        print("INFO: Service profile is not supported")
+        print("INFO: Item profile is not supported")
         return False
 
     def _get_item_info_from_local_id(self, product, local_id):
@@ -351,17 +369,6 @@ class Hub(object):
 
         return r.json()['aps']['id']
 
-    def _create_reseller_profile(self, package):
-        payload = {
-            'aps': {'type': '{}/{}/{}.{}'.format(
-                package.connector_id, "marketPlaceProfile", package.version, package.release)},
-            'vendorContract': '',
-        }
-
-        r = self.aps.post('aps/2/resources/', json=payload)
-        apsapi_raise_for_status(r)
-        return r.json()['aps']['id']
-
     def _type_manager_available(self):
         r = self.aps.get('aps/2/services/resource-type-manager')
         try:
@@ -374,9 +381,9 @@ class Hub(object):
             sys.exit(1)
         return r.json()
 
-    def _exists_marketplace_profile_resource(self, package):
+    def _exists_item_profile_resource(self, package):
         r = self.aps.get('aps/2/resources?implementing({}/{}/{}.{})'.format(
-            package.connector_id, "marketPlaceProfile", package.version, package.release))
+            package.connector_id, "itemProfile", package.version, package.release))
         try:
             data = json.loads(r.content.decode('utf-8'))
             if data[0]['aps']['id']:
@@ -436,12 +443,12 @@ class Hub(object):
     def _create_counted_ref_rts(self, package, app_id, update=False):
         rt_ids = {}
         if update:
-            exists_marketplace_profile = self._exists_marketplace_profile_resource(package)
-            if not exists_marketplace_profile:
+            existis_item_profile = self._exists_item_profile_resource(package)
+            if not existis_item_profile:
                 print("ERROR: Create new resource types for this package version requested \n" +
                       "using new experimental mode, but seams this package uses counter mode.\n" +
                       "update operation aborted, either use normal mode, either ensure " +
-                      "marketProfile resources exists")
+                      "some item resources")
                 sys.exit(1)
             existing_resources = self._get_existing_ref_rts(app_id)
         for counter, schema in package.counters.items():
@@ -478,35 +485,11 @@ class Hub(object):
 
         return rt_ids
 
-    def _create_reseller_link_rt(self, package, app_id):
-        rt_ids = {}
-        resource_uid = self._create_reseller_profile(package)
-        payload = {
-            'resclass_name': 'rc.saas.service.link',
-            'name': 'Vendor Contract ID',
-            'act_params': [
-                {
-                    'var_name': 'app_id',
-                    'var_value': app_id
-                },
-                {
-                    'var_name': 'resource_uid',
-                    'var_value': resource_uid
-                }
-            ]
-        }
-
-        response = self.osaapi.addResourceType(**payload)
-        osaapi_raise_for_status(response)
-        rt_ids[response['result']['resource_type_id']] = 0
-
-        return rt_ids
-
     def _create_counter_rts(self, package, app_id, update=False):
         rt_ids = {}
         if update:
-            exists_marketplace_profile = self._exists_marketplace_profile_resource(package)
-            if exists_marketplace_profile:
+            existis_item_profile = self._exists_item_profile_resource(package)
+            if existis_item_profile:
                 print("ERROR: Create new resource types for this package version requested \n" +
                       "but seams this package has been instantiated using experimental mode.\n" +
                       "update operation aborted, either use experimental mode, either ensure " +
@@ -580,8 +563,6 @@ class Hub(object):
             rts.update(self._create_core_rts(package, app_id, instance_uuid))
         if self._is_service_profile_supported(instance_uuid) and experimental:
             rts.update(self._create_counted_ref_rts(package, app_id, update_rts))
-            if not update_rts:
-                rts.update(self._create_reseller_link_rt(package, app_id))
         else:
             rts.update(self._create_counter_rts(package, app_id, update_rts))
         rts.update(self._create_parameter_rts(package, app_id))
