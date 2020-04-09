@@ -89,7 +89,7 @@ class Hub(object):
     def _assert_supported_version(version, experimental=False):
         supported = False
 
-        match = re.match(r'^(?P<oamajor>oa-8)|(?P<cbmajor>cb-20)\.(?P<minor>\d+)-', version)
+        match = re.match(r'^((?P<oamajor>oa-8)|(?P<cbmajor>cb-20))\.(?P<minor>\d+)-', version)
         if match:
             '''
             Supported versions:
