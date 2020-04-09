@@ -98,12 +98,12 @@ class Hub(object):
             CB-20.5 in any mode
             '''
             if match.groupdict()['oamajor']:
-                oamajor = int(match.groupdict()['oamajor'].replace('oa-',''))
+                oamajor = int(match.groupdict()['oamajor'].replace('oa-', ''))
             else:
                 oamajor = 0
 
             if match.groupdict()['cbmajor']:
-                cbmajor = int(match.groupdict()['cbmajor'].replace('cb-',''))
+                cbmajor = int(match.groupdict()['cbmajor'].replace('cb-', ''))
             else:
                 cbmajor = 0
             minor = int(match.groupdict()['minor'])
