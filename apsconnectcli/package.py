@@ -32,6 +32,7 @@ class Package(object):
     connector_name = None
     version = None
     release = None
+    product_id = None
 
     app_properties = {}
     tenant_properties = {}
@@ -83,7 +84,8 @@ class Package(object):
         resources = {}
 
         for key in self.tenant_properties:
-            if self.tenant_properties[key]['type'] in resource_types:
+            if self.tenant_properties[key]['type'] in resource_types and key.decode(
+                    'utf-8') != 'COUNTRY':
                 resources[key] = self.tenant_properties[key]
 
         return resources
@@ -113,6 +115,7 @@ class Package(object):
         tree = xml_et.ElementTree(file=self.meta_path)
         ns = '{http://aps-standard.org/ns/2}'
         self.connector_id = tree.find('{}id'.format(ns)).text
+        self.product_id = self.connector_id.replace("http://aps.odin.com/app/", "")
         self.version = tree.find('{}version'.format(ns)).text
         self.release = tree.find('{}release'.format(ns)).text
 

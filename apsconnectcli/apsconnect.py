@@ -58,7 +58,7 @@ class APSConnectUtil:
                   .format(GITHUB_RELEASES_PAGE))
 
     def install_frontend(self, source, oauth_key, oauth_secret, backend_url, settings=None,
-                         network='proxy', hub_id=None, instance_only=False):
+                         network='proxy', hub_id=None, instance_only=False, experimental=False):
         """ Install connector-frontend in Odin Automation Hub, --source can be http(s):// or
         filepath"""
 
@@ -72,34 +72,85 @@ class APSConnectUtil:
         settings = json.load(open(settings)) if settings else {}
         hub = Hub()
 
-        package = Package(source, instance_only=instance_only)
-        print("Importing connector {} {}-{}".format(package.connector_id,
-                                                    package.version,
-                                                    package.release))
-        application_id = hub.import_package(package)
-        print("Connector {} imported with id={} [ok]"
-              .format(package.connector_id, application_id))
+        hub.check_connect_hub_app_installed()
+        if experimental:
+            hub.check_experimental_support()
 
-        # Create app instance
-        instance_uuid = hub.create_instance(package, oauth_key, oauth_secret, backend_url,
-                                            settings, network, hub_id)
-        print("Application instance creation completed [ok]")
+        package = Package(source, instance_only=instance_only)
+        connection = hub.get_connections(package.product_id)
+        print("Detected connection {} for this Hub and product {}".format(connection['id'],
+                                                                          package.product_id))
+        operation = hub.check_package_operation(package, experimental)
+        update_rts = False
+        if operation == "install":
+            print("Importing connector {} version {}.{}".format(package.connector_id,
+                                                                package.version,
+                                                                package.release))
+            application_id = hub.import_package(package)
+            print("Connector {} imported with id={} [ok]"
+                  .format(package.connector_id, application_id))
+
+            # Create app instance
+            instance_uuid = hub.create_instance(package, oauth_key, oauth_secret, backend_url,
+                                                settings, network, hub_id)
+            print("Application instance creation completed [ok]")
+
+        elif operation == "createRTs":
+            print("Creating only RTs")
+            update_rts = True
+            application_id = hub.get_application_id(package.connector_id)
+            instance_uuid = hub.get_application_instances(application_id)[0][
+                'application_resource_id']
+            print("Detected app {} and instance {}".format(application_id, instance_uuid))
+        elif operation == "upgrade":
+            print("Upgrade of connector requested")
+            application_id = hub.import_package(package)
+            print("Connector {} imported with id={} [ok]"
+                  .format(package.connector_id, application_id))
+            app_instance = hub.get_application_id(package.connector_id)
+            instances = hub.get_application_instances(app_instance)
+
+            if len(instances) != 1:
+                print("ERROR: This utility can only handle one instance per connector.\n" +
+                      "Please perform the upgrade from hub user interface")
+                exit(1)
+
+            if instances[0]['application_instance_id']:
+                hub.upgrade_application_instance(instances[0]['application_instance_id'])
+                print("INFO: Upgrade operation of connector instance initiated \n" +
+                      "Track progress in HUB Control panel User interface \n" +
+                      "When finished run again to create new Resources if any")
+                sys.exit(1)
+            update_rts = True
 
         if instance_only:
             return
 
         # Create resource types
-        resource_types = hub.create_rts(package, application_id, instance_uuid)
+        resource_types = hub.create_rts(package,
+                                        application_id,
+                                        instance_uuid,
+                                        experimental,
+                                        update_rts)
         print("Resource types creation completed [ok]")
 
-        # Create service template
-        service_template_id = hub.create_st(package, resource_types)
-        print("Service template \"{}\" created with id={} [ok]".format(package.connector_name,
-                                                                       service_template_id))
+        if operation == "install":
+            # Create service template
+            service_template_id = hub.create_st(package, resource_types)
+            print("Service template \"{}\" created with id={} [ok]".format(package.connector_name,
+                                                                           service_template_id))
 
-        # Set up service template limits
-        hub.apply_st_limits(service_template_id, resource_types)
-        print("Limits for Service template \"{}\" are applied [ok]".format(service_template_id))
+            # Set up service template limits
+            hub.apply_st_limits(service_template_id, resource_types)
+            print("Limits for Service template \"{}\" are applied [ok]".format(service_template_id))
+        else:
+            print("The operation completed successfully.\n\n" +
+                  "Please note that current version of this utility does not support " +
+                  "modifications of existing Service Templates (STs). In case you need " +
+                  "additional resources to be added to one or multiple STs, please use " +
+                  "'Configure Product' button at the Provider Control Panel > Applications > " +
+                  "Instance details screen and choose the 'Run wizard and go though " +
+                  "all configuration steps' option.")
 
     def generate_oauth(self, namespace=''):
         """ Helper for Oauth credentials generation"""
@@ -114,7 +165,7 @@ class APSConnectUtil:
     def info(self):
         """ Show current state of apsconnect-cli binding with OA Hub"""
         print("OA Hub:")
-        print(_check_binding(lambda: os.path.exists(CFG_FILE_PATH),  _get_hub_info))
+        print(_check_binding(lambda: os.path.exists(CFG_FILE_PATH), _get_hub_info))
 
     def hub_token(self):
         hub = Hub()
@@ -174,7 +225,7 @@ def bin_version():
     try:
         with open(os.path.join(sys._MEIPASS, 'VERSION')) as f:
             return f.read()
-    except:
+    except Exception:
         return None
 
 
@@ -188,7 +239,7 @@ def get_version():
 def get_latest_version():
     try:
         return get(LATEST_RELEASE_URL, timeout=REQUEST_TIMEOUT).json()['tag_name'][1:]
-    except:
+    except Exception:
         return None
 
 
