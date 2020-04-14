@@ -25,11 +25,10 @@ script:
 after_success:
 - "./.travis/after_success.sh"
 deploy:
-  matrix:
   - provider: releases
     skip_cleanup: true
     api_key:
-      secure: ovgNw6RwkcdXeD/NI6I+sSJutbr7PkgH5QQq3rDwcmBxu1kMn80EpqFYVe2NXBx493TlaO/+hA9WsCPDzyNVoFnt7xfJWE99K34/kQ8CKvKDYbu9EYvpul2U2uvDZx9a4M5ZxzaAInJrCDC348Dga4WCXl2yeLmyezIgpF3AxHiO+CJX3Lh7lod7P+U/3bRk1knBxtd4nMh8SABzpR+PX9qMnp2DQpb0ZAsm0jDkv5JXEuZW0a8bdcZwYLx4y1v8Hv70THkgl9dqG6FpUEFkG1ht4Peymr8voLdKHtl1fw/o7r9/+WFfZEwHkc4V7IGocDXyCRVuolQCiL5p4GxMwFB80zO9/LWGx8wgeVmVKXFGyLWurcP21FO9lbky3P/NeqsWyf6tPH7wCcsxl/Quw1LA2xk0xwdgwmffRMi9kXhi+JDkKM71CFVTGYlJFFd7zww5//tA15MPaD87vcQ151dnFD3yWlHGvonRNrVoWTQ5GSy/37/Gr70yt0zQz78HATT91BxN19wxAXpbxBqkoTcyDf80A7CmAwpA5BuVrzs7FNSXjZyWtJgPuSLYchmFHEhqjanEtBjM6CWFuACWkLK7Z+SYOhBHeQXOvvmSljEJzWGD7WCmsIiZyFxnHoUcb5MwsZIlltE6BmcqiAtIUNvonD4od/VLJjy7wzMLBLs=
+      secure: szhuFeOjchPI0E6lEsn2BbggPP22G2vOv6nOnlDY6qtRr8dDRO2BOyTBWKcC1fOK+xofAp7mFo564RqQAASCWrXdrnI9b76t1ntLl5D89LTn4b+zSnDvDrDuet92aoi1BGLH/OyWKIMHkEavm0EAyqcreS0BNC62JN9Xr7ciEiXYLTknmaYg1y4ltg5cVfvKJArgDsxQqdcIrhaGjnLZ5rDDgegfyzoWgiezzCVt4/OhWVm7La9J6uVtAjheWTKDz+mmSslh0/ESYwFciHgdtdfEme+JyGJQ5VlrP+2BhKuHMqrSaJubYfGwi5ATklFZogAq+H2G81qksM6VmCQBT6TjqGBIhCjbpl5bUxZsM/oZ5PQmZ5k+N6DHXce/6z1j68fm/0kgQwpSa10Q65QtFjDnd2YY0/WRGKnvG9tz6DqIqQTeDEvqzpmZeGwG75/5lErumfTLX5ocRMXd7RjonG7LK7SQEQXvrmb7aSL2EpGnzWTfrcqbVwSBiYU+eNViOVmKC/56zEKS/FP98bXnCbFXff8anVVThvgcYjiNiypDf1B1o+7Hpso5sbrZVyjbtHTzcULhYTn39k/BEqDopSFPvUISyMNuEoOFV9uaYv4horMynJhDvnQmNkDnWs5uc7WDhFjpp2gVP/Mvj3Z/1y4KA/D3hWJx8b81sCiYxnQ=
     file: dist/apsconnect-mac
     on:
       tags: true
@@ -39,17 +38,17 @@ deploy:
   - provider: releases
     skip_cleanup: true
     api_key:
-      secure: ovgNw6RwkcdXeD/NI6I+sSJutbr7PkgH5QQq3rDwcmBxu1kMn80EpqFYVe2NXBx493TlaO/+hA9WsCPDzyNVoFnt7xfJWE99K34/kQ8CKvKDYbu9EYvpul2U2uvDZx9a4M5ZxzaAInJrCDC348Dga4WCXl2yeLmyezIgpF3AxHiO+CJX3Lh7lod7P+U/3bRk1knBxtd4nMh8SABzpR+PX9qMnp2DQpb0ZAsm0jDkv5JXEuZW0a8bdcZwYLx4y1v8Hv70THkgl9dqG6FpUEFkG1ht4Peymr8voLdKHtl1fw/o7r9/+WFfZEwHkc4V7IGocDXyCRVuolQCiL5p4GxMwFB80zO9/LWGx8wgeVmVKXFGyLWurcP21FO9lbky3P/NeqsWyf6tPH7wCcsxl/Quw1LA2xk0xwdgwmffRMi9kXhi+JDkKM71CFVTGYlJFFd7zww5//tA15MPaD87vcQ151dnFD3yWlHGvonRNrVoWTQ5GSy/37/Gr70yt0zQz78HATT91BxN19wxAXpbxBqkoTcyDf80A7CmAwpA5BuVrzs7FNSXjZyWtJgPuSLYchmFHEhqjanEtBjM6CWFuACWkLK7Z+SYOhBHeQXOvvmSljEJzWGD7WCmsIiZyFxnHoUcb5MwsZIlltE6BmcqiAtIUNvonD4od/VLJjy7wzMLBLs=
+      secure: szhuFeOjchPI0E6lEsn2BbggPP22G2vOv6nOnlDY6qtRr8dDRO2BOyTBWKcC1fOK+xofAp7mFo564RqQAASCWrXdrnI9b76t1ntLl5D89LTn4b+zSnDvDrDuet92aoi1BGLH/OyWKIMHkEavm0EAyqcreS0BNC62JN9Xr7ciEiXYLTknmaYg1y4ltg5cVfvKJArgDsxQqdcIrhaGjnLZ5rDDgegfyzoWgiezzCVt4/OhWVm7La9J6uVtAjheWTKDz+mmSslh0/ESYwFciHgdtdfEme+JyGJQ5VlrP+2BhKuHMqrSaJubYfGwi5ATklFZogAq+H2G81qksM6VmCQBT6TjqGBIhCjbpl5bUxZsM/oZ5PQmZ5k+N6DHXce/6z1j68fm/0kgQwpSa10Q65QtFjDnd2YY0/WRGKnvG9tz6DqIqQTeDEvqzpmZeGwG75/5lErumfTLX5ocRMXd7RjonG7LK7SQEQXvrmb7aSL2EpGnzWTfrcqbVwSBiYU+eNViOVmKC/56zEKS/FP98bXnCbFXff8anVVThvgcYjiNiypDf1B1o+7Hpso5sbrZVyjbtHTzcULhYTn39k/BEqDopSFPvUISyMNuEoOFV9uaYv4horMynJhDvnQmNkDnWs5uc7WDhFjpp2gVP/Mvj3Z/1y4KA/D3hWJx8b81sCiYxnQ=
     file:
-    - dist/apsconnect-lin
-    - dist/apsconnect.exe
+      - dist/apsconnect-lin
+      - dist/apsconnect.exe
     on:
       tags: true
       all_branches: true
       repo: ingrammicro/apsconnect-cli
       condition: "$BUILD = LINUX"
   - provider: pypi
-    user: __token__
+    user: "__token__"
     password:
       secure: pypi-AgEIcHlwaS5vcmcCJDJkNTA1YjE4LWQzZGQtNDkyYy1hY2NmLTFmZDlhNjFhZjlmNwACPnsicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJhcHNjb25uZWN0Y2xpIl19LCAidmVyc2lvbiI6IDF9AAAGIEyaTWtxWpqFiDXOnzKi8Xr7R6KJkojLtcWcrf_Bcbxs
     on:
@@ -58,5 +57,3 @@ deploy:
       distributions: sdist bdist_wheel
       repo: ingrammicro/apsconnect-cli
       condition: "$BUILD = PYPI"
-  password:
-    secure: szhuFeOjchPI0E6lEsn2BbggPP22G2vOv6nOnlDY6qtRr8dDRO2BOyTBWKcC1fOK+xofAp7mFo564RqQAASCWrXdrnI9b76t1ntLl5D89LTn4b+zSnDvDrDuet92aoi1BGLH/OyWKIMHkEavm0EAyqcreS0BNC62JN9Xr7ciEiXYLTknmaYg1y4ltg5cVfvKJArgDsxQqdcIrhaGjnLZ5rDDgegfyzoWgiezzCVt4/OhWVm7La9J6uVtAjheWTKDz+mmSslh0/ESYwFciHgdtdfEme+JyGJQ5VlrP+2BhKuHMqrSaJubYfGwi5ATklFZogAq+H2G81qksM6VmCQBT6TjqGBIhCjbpl5bUxZsM/oZ5PQmZ5k+N6DHXce/6z1j68fm/0kgQwpSa10Q65QtFjDnd2YY0/WRGKnvG9tz6DqIqQTeDEvqzpmZeGwG75/5lErumfTLX5ocRMXd7RjonG7LK7SQEQXvrmb7aSL2EpGnzWTfrcqbVwSBiYU+eNViOVmKC/56zEKS/FP98bXnCbFXff8anVVThvgcYjiNiypDf1B1o+7Hpso5sbrZVyjbtHTzcULhYTn39k/BEqDopSFPvUISyMNuEoOFV9uaYv4horMynJhDvnQmNkDnWs5uc7WDhFjpp2gVP/Mvj3Z/1y4KA/D3hWJx8b81sCiYxnQ=
