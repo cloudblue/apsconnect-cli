@@ -1,9 +1,9 @@
 <p align="center">
-	<img src="https://raw.githubusercontent.com/cloudblue/apsconnect-cli/master/assets/logo.png" alt="logo"/>
+	<img src="https://user-images.githubusercontent.com/3930620/79362219-2c19c980-7efb-11ea-861d-f8ea1a0e4d00.png" alt="logo"/>
 </p>
 
 # apsconnect-cli
-_A command line tool for APS connector installation on Odin Automation in the relaxed way._
+_CloudBlue Connect command line tool to automate product lifecycle management for the CloudBlue Commerce._
 
 ![pyversions](https://img.shields.io/pypi/pyversions/apsconnectcli.svg) [![Build Status](https://img.shields.io/travis/cloudblue/apsconnect-cli/master.svg)](https://travis-ci.org/cloudblue/apsconnect-cli) [![PyPi Status](https://img.shields.io/pypi/v/apsconnectcli.svg)](https://pypi.python.org/pypi/apsconnectcli)
 
