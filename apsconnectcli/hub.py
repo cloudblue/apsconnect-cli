@@ -178,24 +178,33 @@ class Hub(object):
         osaapi_raise_for_status(r)
         print("APS Development mode {}.".format('DISABLED' if disable else 'ENABLED'))
 
-    def check_package_operation(self, package, experimental):
-        url = '/aps/2/types?implementing({}/app)'.format(package.connector_id)
+    def check_package_operation(self, package):
+        app_id = self.get_application_id(package.connector_id)
+        if app_id is None:
+            print("INFO: package is not installed")
+            return "install"
+        app_instances = self.get_application_instances(int(app_id))
+        if len(app_instances) == 0:
+            return "install"
+        url = '/aps/2/resources/{}'.format(app_instances[0]['application_resource_id'])
         r = self.aps.get(url)
         try:
             data = json.loads(r.content.decode('utf-8'))
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
-        if len(data) == 0:
+        if 'aps' not in data:
             print("INFO: package is not installed")
             return "install"
         latest = 0
-        for type in data:
-            match = re.match(r'{}/app/(?P<major>\d+)\.0'.format(package.connector_id), type['id'])
-            if match:
-                major = int(match.groupdict()['major'])
-                if int(latest) < major:
-                    latest = major
+        match = re.match(r'{}/app/(?P<major>\d+)\.0'.format(
+            package.connector_id),
+            data['aps']['type']
+        )
+        if match:
+            major = int(match.groupdict()['major'])
+            if int(latest) < major:
+                latest = major
         if int(latest) == int(package.version):
             return "createRTs"
         elif int(latest) > int(package.version):
