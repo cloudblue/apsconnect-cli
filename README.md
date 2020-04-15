@@ -42,12 +42,12 @@ apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret
 				            [--network = proxy] [--hub-id HUB_ID] [--instance-only = false]
 ```
 ```
-⇒  apsconnect install-frontend package.aps.zip application-3-v1-687fd3e99eb 639a0c2bf3ab461aaf74a5c622d1fa34 --backend-url http://127.197.49.26/
-APSConnect-cli v.1.7.11
-Importing connector http://aps.odin.com/app/connector
-Connector http://aps.odin.com/app/connector imported with id=206 [ok]
+⇒  apsconnect install-frontend package.aps.zip 687fd3e99eb 61aaf74a5c622d1fa34 --backend-url http://127.0.0.1/
+APSConnect-cli v19
+Importing connector http://connect.cloudblue.com/product/example
+Connector http://connect.cloudblue.com/product/example imported with id=206 [ok]
 Resource types creation [ok]
-Service template "connector" created with id=16 [ok]
+Service template "Product A" created with id=16 [ok]
 Limits for Service template "16" are applied [ok]
 ```
 
