@@ -80,7 +80,7 @@ class APSConnectUtil:
         connection = hub.get_connections(package.product_id)
         print("Detected connection {} for this Hub and product {}".format(connection['id'],
                                                                           package.product_id))
-        operation = hub.check_package_operation(package, experimental)
+        operation = hub.check_package_operation(package)
         update_rts = False
         if operation == "install":
             print("Importing connector {} version {}.{}".format(package.connector_id,
