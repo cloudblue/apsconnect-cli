@@ -3,7 +3,6 @@ from __future__ import print_function
 import json
 import re
 import sys
-import uuid
 
 from xml.etree import ElementTree as xml_et
 
@@ -241,22 +240,6 @@ class Hub(object):
                 },
             },
         }
-
-        if 'hubId' in package.app_properties:
-            if not self.hub_id and not hub_id:
-                raise Exception("Core OA resource is not found\n"
-                                "Use --hub-id={value} argument to specify the ID "
-                                "manually or --hub-id=auto to generate it automatically")
-            elif self.hub_id:
-                hub_id = self.hub_id
-            elif hub_id == 'auto':
-                hub_id = str(uuid.uuid4())
-
-            payload.update({
-                'app': {
-                    'hubId': hub_id
-                }
-            })
 
         payload.update(settings)
 
@@ -658,6 +641,8 @@ class Hub(object):
         r = self.osaapi.aps.getApplications(**payload)
         osaapi_raise_for_status(r)
 
+        if len(r['result']) == 0:
+            return None
         return r['result'][0]['application_id'] or None
 
     def get_application_instances(self, application_id):
