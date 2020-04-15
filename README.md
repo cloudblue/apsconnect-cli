@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="https://user-images.githubusercontent.com/3930620/79362219-2c19c980-7efb-11ea-861d-f8ea1a0e4d00.png" alt="logo"/>
+	<img width="40%" src="https://user-images.githubusercontent.com/3930620/79362219-2c19c980-7efb-11ea-861d-f8ea1a0e4d00.png" alt="logo"/>
 </p>
 
 # apsconnect-cli
