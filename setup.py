@@ -28,7 +28,7 @@ setup(
     packages=['apsconnectcli'],
     description='A command line tool for APS connector installation on Odin Automation in '
                 'the relaxed way.',
-    url='https://github.com/ingrammicro/apsconnect-cli',
+    url='https://github.com/cloudblue/apsconnect-cli',
     license='Apache Software License',
     include_package_data=True,
     install_requires=[str(ir.req) for ir in install_reqs],

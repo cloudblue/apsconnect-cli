@@ -1,11 +1,11 @@
 <p align="center">
-	<img src="https://raw.githubusercontent.com/ingrammicro/apsconnect-cli/master/assets/logo.png" alt="logo"/>
+	<img src="https://raw.githubusercontent.com/cloudblue/apsconnect-cli/master/assets/logo.png" alt="logo"/>
 </p>
 
 # apsconnect-cli
 _A command line tool for APS connector installation on Odin Automation in the relaxed way._
 
-![pyversions](https://img.shields.io/pypi/pyversions/apsconnectcli.svg) [![Build Status](https://img.shields.io/travis/ingrammicro/apsconnect-cli/master.svg)](https://travis-ci.org/ingrammicro/apsconnect-cli) [![PyPi Status](https://img.shields.io/pypi/v/apsconnectcli.svg)](https://pypi.python.org/pypi/apsconnectcli)
+![pyversions](https://img.shields.io/pypi/pyversions/apsconnectcli.svg) [![Build Status](https://img.shields.io/travis/cloudblue/apsconnect-cli/master.svg)](https://travis-ci.org/cloudblue/apsconnect-cli) [![PyPi Status](https://img.shields.io/pypi/v/apsconnectcli.svg)](https://pypi.python.org/pypi/apsconnectcli)
 
 
 ## How to install

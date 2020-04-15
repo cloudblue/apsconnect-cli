@@ -31,9 +31,9 @@ warnings.filterwarnings('ignore')
 
 IS_PYTHON3 = sys.version_info >= (3,)
 
-LATEST_RELEASE_URL = 'https://api.github.com/repos/ingrammicro/apsconnect-cli/releases/latest'
+LATEST_RELEASE_URL = 'https://api.github.com/repos/cloudblue/apsconnect-cli/releases/latest'
 REQUEST_TIMEOUT = 5
-GITHUB_RELEASES_PAGE = 'https://github.com/ingrammicro/apsconnect-cli/releases/'
+GITHUB_RELEASES_PAGE = 'https://github.com/cloudblue/apsconnect-cli/releases/'
 
 
 class APSConnectUtil:
