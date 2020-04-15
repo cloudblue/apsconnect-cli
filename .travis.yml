@@ -33,7 +33,7 @@ deploy:
     on:
       tags: true
       all_branches: true
-      repo: ingrammicro/apsconnect-cli
+      repo: cloudblue/apsconnect-cli
       condition: "$BUILD = OSX"
   - provider: releases
     skip_cleanup: true
@@ -45,7 +45,7 @@ deploy:
     on:
       tags: true
       all_branches: true
-      repo: ingrammicro/apsconnect-cli
+      repo: cloudblue/apsconnect-cli
       condition: "$BUILD = LINUX"
   - provider: pypi
     user: "__token__"
@@ -55,5 +55,5 @@ deploy:
       tags: true
       all_branches: true
       distributions: sdist bdist_wheel
-      repo: ingrammicro/apsconnect-cli
+      repo: cloudblue/apsconnect-cli
       condition: "$BUILD = PYPI"
