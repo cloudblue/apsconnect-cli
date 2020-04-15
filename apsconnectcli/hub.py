@@ -3,7 +3,6 @@ from __future__ import print_function
 import json
 import re
 import sys
-import uuid
 
 from xml.etree import ElementTree as xml_et
 
