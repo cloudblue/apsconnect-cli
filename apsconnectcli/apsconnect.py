@@ -37,11 +37,12 @@ GITHUB_RELEASES_PAGE = 'https://github.com/cloudblue/apsconnect-cli/releases/'
 
 
 class APSConnectUtil:
-    """ A command line tool for APS connector installation on Odin Automation in the relaxed way"""
+    """A command line tool for installation of APS packages from
+the CloudBlue Connect into the CloudBlue Commerce"""
 
     def init_hub(self, hub_host, user='admin', pwd='1q2w3e', use_tls=False, port=8440,
                  aps_host=None, aps_port=6308, use_tls_aps=True):
-        """ Connect your Odin Automation Hub"""
+        """ Connect your CloudBlue Commerce Instance (Hub)"""
         Hub.configure(hub_host, user, pwd, use_tls, port, aps_host, aps_port, use_tls_aps)
 
     def version(self):
@@ -59,8 +60,8 @@ class APSConnectUtil:
 
     def install_frontend(self, source, oauth_key, oauth_secret, backend_url, settings=None,
                          network='proxy', hub_id=None, instance_only=False, experimental=False):
-        """ Install connector-frontend in Odin Automation Hub, --source can be http(s):// or
-        filepath"""
+        """ Install connector-frontend in the CloudBlue Commerce Instance (Hub),
+        --source can be http(s):// or filepath"""
 
         if backend_url.startswith('http://'):
             print("WARN: Make sure that the APS development mode enabled for http backend. "
