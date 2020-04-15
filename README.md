@@ -33,7 +33,8 @@ CentOS 7.2 provide outdated Python 2.7.5 release, so you'll need an additional s
 
 ## Usage
 
-#### 1 Connect your Odin Automation Hub
+#### 1 Connect to the CloudBlue Commerce instance (Hub)
+The host where this command is executed needs to have network connectivity to the CloudBlue Commerce instance.
 
 ```
 apsconnect init-hub --hub-host HUB_HOST [--user USER] [--pwd PWD] \
@@ -49,7 +50,7 @@ Connectivity with hub APS API [ok]
 Config saved [/Users/allexx/.aps_config]
 ```
 
-#### 2 Install connector-frontend in Odin Automation Hub
+#### 2 Install APS Package into the CloudBlue Commerce Automation Hub
 
 ```
 apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
@@ -71,7 +72,7 @@ Can be used to provide custom application instance global settings.
 
 Use `--instance-only` flag if you wish to skip resource types and service templates creation.
 
-**WARNING** Due to limitations of Operations Automation API importing large (more than a few megabytes) packages from local source might fail.
+**WARNING** Due to limitations of CloudBlue Commerce API importing large (more than a few megabytes) packages from local source might fail.
 Use HTTP link as source for such packages.
 
 ## Misc
