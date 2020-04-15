@@ -15,22 +15,6 @@ Typically, all you need is just PyPI client, like [pip](https://pypi.python.org/
 pip install apsconnectcli
 ```
 
-### Python releases before 2.7.9 (like CentOS 7.2)
-CentOS 7.2 provide outdated Python 2.7.5 release, so you'll need an additional step to make it work properly:
-
-1. Update the setuptools package
-    ```
-    pip install -U setuptools
-    ```
-1. Install backport of ssl.match_hostname()
-    ```
-    pip install -U backports.ssl-match-hostname
-    ```
-1. Install APSConnect CLI tool forcing requirements update
-    ```
-    pip install -U apsconnectcli
-    ```
-
 ## Usage
 
 #### 1 Connect to the CloudBlue Commerce instance (Hub)
