@@ -48,7 +48,7 @@ deploy:
       repo: ingrammicro/apsconnect-cli
       condition: "$BUILD = LINUX"
   - provider: pypi
-    user: __token__
+    user: "__token__"
     password:
       secure: C4lOcmpoxOxA8Rifj8Eys8LZ4t0eeixQkpEcIWx+EoUTFYRdZ69gFQGbg8ExwCOE5OpmvYxwmahHDnYjlr1DtdeygxtTYJdFBFiNDwgvGHgpJbVgRpfhMhv5DVoNN8pLE9YU9QKBJXRmnewMkxh+nMNas8wpRYwj1CeeM1oM2Rn0nKNhGHKYTBp1wGeD/27fJVmuEnaz+wrMdD4/6cd8Mc+fFMSNrqRvQwNbPCRRHD2VxMenrmfJG4gNyW+DhD+0zg6Qnp+uZ9aAKpjXnxcl3PMgHUB5v5NbuahCdXqMKnrt03A37xkfWLBS5Y0rT5zdwcmPvbw2w3CoEPZpih1PxtaEQveFOWHyl9OjUj61LGXYv64lKhL3q+M209rRpVjXAZRnR37Ia9Wu0YdS1+6havWCb6nOq5je/R2/L86ZUXD8HIG7Q2U71Z1Ewk65LJrplEtEd6tLRWbyTkLGvbxB5IDBe2YS5Jjs2hGSZVpvODUCOTLi2yuV1OEu7euFYTtZtHb+H8rd+V+32QPLL1ODdfUOAXmv3TQDnNiLHWJ1vROE+r+3Cuz82DJQD85DrNt+74+mb4zENRbndYii68WsbTmnCu8Ms4X8H9b2fFAxN81crp2f424p2jkS9+29leORlGI9OZU4qy6dKR9cH7T+In/z5bDvpi263OiNpps8cEk=
     on:
