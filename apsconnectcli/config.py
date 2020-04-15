@@ -15,7 +15,8 @@ def get_config():
     except IOError as e:
         if e.errno == 2:
             print("Could not find connected hub data. "
-                  "Please run the init-hub command to connect to the CloudBlue Commerce instance (hub).")
+                  "Please run the init-hub command to connect to the "
+                  "CloudBlue Commerce instance (hub).")
         else:
             print("Could not open configuration file:\n{}".format(e))
         sys.exit(1)
