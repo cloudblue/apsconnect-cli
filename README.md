@@ -8,11 +8,11 @@ _CloudBlue Connect command line tool to automate product lifecycle management fo
 ![pyversions](https://img.shields.io/pypi/pyversions/apsconnectcli.svg) [![Build Status](https://img.shields.io/travis/cloudblue/apsconnect-cli/master.svg)](https://travis-ci.org/cloudblue/apsconnect-cli) [![PyPi Status](https://img.shields.io/pypi/v/apsconnectcli.svg)](https://pypi.python.org/pypi/apsconnectcli)
 
 
-## How to install
+## How to install or update
 APSConnect CLI tool is compatible with all recent Python releases of 2.7, 3.4, 3.5 and 3.6 versions.
 Typically, all you need is just PyPI client, like [pip](https://pypi.python.org/pypi/pip):
 ```
-pip install apsconnectcli
+pip install -U apsconnectcli
 ```
 
 ## Usage
