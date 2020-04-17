@@ -37,7 +37,7 @@ APSConnect-cli v.1.7.11
 Connectivity with hub RPC API [ok]
 Hub version oa-7.1-3256
 Connectivity with hub APS API [ok]
-Config saved [/Users/allexx/.aps_config]
+Config saved [/Users/user/.aps_config]
 ```
 
 #### 2 Install APS Package into the CloudBlue Commerce Automation Hub
