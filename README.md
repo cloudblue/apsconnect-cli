@@ -21,9 +21,15 @@ pip install -U apsconnectcli
 The host where this command is executed needs to have network connectivity to the CloudBlue Commerce instance.
 
 ```
-apsconnect init-hub --hub-host HUB_HOST [--user USER] [--pwd PWD] \
-                    [--use-tls USE_TLS] [--port PORT] [--aps-host APS_HOST] \
-                    [--aps-port APS_PORT] [--use-tls-aps USE_TLS_APS]
+apsconnect init-hub 
+	--hub-host HUB_HOST 
+	[--user USER] 
+	[--pwd PWD]
+	[--use-tls USE_TLS] 
+	[--port PORT] 
+	[--aps-host APS_HOST]
+	[--aps-port APS_PORT]
+	[--use-tls-aps USE_TLS_APS]
 ```
 ```
 ⇒  apsconnect init-hub oa-hub-hostname
