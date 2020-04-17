@@ -37,9 +37,16 @@ Config saved [/Users/allexx/.aps_config]
 #### 2 Install APS Package into the CloudBlue Commerce Automation Hub
 
 ```
-apsconnect install-frontend --source SOURCE --oauth-key OAUTH_KEY --oauth-secret OAUTH_SECRET \
-				            --backend-url BACKEND_URL [--settings SETTINGS_FILE] \
-				            [--network = proxy] [--hub-id HUB_ID] [--instance-only = false]
+apsconnect install-frontend 
+	--source SOURCE 
+	--oauth-key OAUTH_KEY 
+	--oauth-secret OAUTH_SECRET 
+	--backend-url BACKEND_URL 
+	[--settings SETTINGS] 
+	[--network NETWORK] 
+	[--hub-id HUB_ID] 
+	[--instance-only INSTANCE_ONLY] 
+	[--experimental EXPERIMENTAL]
 ```
 ```
 ⇒  apsconnect install-frontend package.aps.zip 687fd3e99eb 61aaf74a5c622d1fa34 --backend-url http://127.0.0.1/
