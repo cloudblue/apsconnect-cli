@@ -94,7 +94,7 @@ class Hub(object):
             Supported versions:
             OA-8.0 or upper on counter mode
             OA-8.3 or upper in experimental mode
-            CB-20.5 in any mode
+            CB-20.4 in any mode
             '''
             if match.groupdict()['oamajor']:
                 oamajor = int(match.groupdict()['oamajor'].replace('oa-', ''))
@@ -108,7 +108,7 @@ class Hub(object):
             minor = int(match.groupdict()['minor'])
             if experimental:
                 supported = (oamajor >= 8 and minor >= 3)\
-                            or (cbmajor >= 20 and minor >= 5)\
+                            or (cbmajor >= 20 and minor >= 4)\
                             or cbmajor > 20
                 if not supported:
                     print(
@@ -117,7 +117,7 @@ class Hub(object):
                     sys.exit(1)
             else:
                 supported = (oamajor >= 8 and minor >= 0)\
-                            or (cbmajor >= 20 and minor >= 5)\
+                            or (cbmajor >= 20 and minor >= 4)\
                             or cbmajor > 20
 
         if not supported:
