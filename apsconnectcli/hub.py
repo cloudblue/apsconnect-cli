@@ -79,10 +79,10 @@ class Hub(object):
 
     @staticmethod
     def _get_hub_version(api):
-        r = api.statistics.getStatisticsReport(reports=[{'name': 'report-for-cep', 'value': ''}])
+        r = api.statistics.getStatisticsReport(reports=[{'name': 'BuildHistory', 'value': ''}])
         osaapi_raise_for_status(r)
-        tree = xml_et.fromstring(r['result'][0]['value'].encode('utf-8'))
-        return tree.find('ClientVersion').text
+        tree = xml_et.fromstring(r['result'][0]['value'])
+        return tree.find('Build/Build').text
 
     @staticmethod
     def _assert_supported_version(version, experimental=False):
