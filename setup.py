@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 
-import os
 from os.path import abspath, dirname, join
+
+import pathlib
 
 from setuptools import setup
 
-try:  # for pip >= 10
-    from pip._internal.req import parse_requirements
-except ImportError:  # for pip <= 9.0.3
-    from pip.req import parse_requirements
+import pkg_resources
 
-install_reqs = parse_requirements(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                               'requirements.txt'), session='None')
+with pathlib.Path('requirements.txt').open() as requirements_txt:
+    install_reqs = [
+        str(requirement)
+        for requirement
+        in pkg_resources.parse_requirements(requirements_txt)
+    ]
 
 here = abspath(dirname(__file__))
 
@@ -31,7 +33,7 @@ setup(
     url='https://github.com/cloudblue/apsconnect-cli',
     license='Apache Software License',
     include_package_data=True,
-    install_requires=[str(ir.req) for ir in install_reqs],
+    install_requires=install_reqs,
     entry_points={
         'console_scripts': [
             'apsconnect = apsconnectcli.apsconnect:main',
