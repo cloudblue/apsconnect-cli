@@ -109,7 +109,7 @@ class TestHub(TestCase):
 
         self.assertEqual(version, 'test')
         xml_mock.fromstring.return_value.find.assert_called()
-        self.assertEqual(xml_mock.fromstring.return_value.find.call_args[0][0], 'ClientVersion')
+        self.assertEqual(xml_mock.fromstring.return_value.find.call_args[0][0], 'Build/Build')
 
     def test_hub_incorrect_id(self):
         with patch('apsconnectcli.hub.osaapi'), \
