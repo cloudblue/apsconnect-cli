@@ -5,3 +5,4 @@ requests==2.20.1
 PyYAML>=4.2b1
 six==1.11.0
 backports.tempfile==1.0
+pathlib>=1.0.1
