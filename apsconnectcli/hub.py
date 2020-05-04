@@ -148,7 +148,9 @@ class Hub(object):
         url = 'aps/2/resources?implementing(http://odin.com/servicesSelector/globals/2.0)'
         r = self.aps.get(url)
         try:
-            if sys.version_info.major < 3:
+            if sys.version_info.major < 3 or (
+                    sys.version_info.major == 3 and sys.version_info.minor < 6
+            ):
                 data = json.loads(r.content.decode('utf-8'))
             else:
                 data = json.loads(r.content)
@@ -164,7 +166,9 @@ class Hub(object):
         r.raise_for_status()
 
         try:
-            if sys.version_info.major < 3:
+            if sys.version_info.major < 3 or (
+                    sys.version_info.major == 3 and sys.version_info.minor < 6
+            ):
                 data = json.loads(r.content.decode('utf-8'))
             else:
                 data = json.loads(r.content)
@@ -194,7 +198,9 @@ class Hub(object):
         url = '/aps/2/resources/{}'.format(app_instances[0]['application_resource_id'])
         r = self.aps.get(url)
         try:
-            if sys.version_info.major < 3:
+            if sys.version_info.major < 3 or (
+                    sys.version_info.major == 3 and sys.version_info.minor < 6
+            ):
                 data = json.loads(r.content.decode('utf-8'))
             else:
                 data = json.loads(r.content)
@@ -336,7 +342,9 @@ class Hub(object):
         r = self.aps.post('aps/2/resources/{}/itemInfo'.format(self.extension_id), json=payload)
         try:
             apsapi_raise_for_status(r)
-            if sys.version_info.major < 3:
+            if sys.version_info.major < 3 or (
+                    sys.version_info.major == 3 and sys.version_info.minor < 6
+            ):
                 data = json.loads(r.content.decode('utf-8'))
             else:
                 data = json.loads(r.content)
@@ -389,7 +397,9 @@ class Hub(object):
         r = self.aps.get('aps/2/resources?implementing({}/{}/{}.{})'.format(
             package.connector_id, "itemProfile", package.version, package.release))
         try:
-            if sys.version_info.major < 3:
+            if sys.version_info.major < 3 or (
+                    sys.version_info.major == 3 and sys.version_info.minor < 6
+            ):
                 data = json.loads(r.content.decode('utf-8'))
             else:
                 data = json.loads(r.content)
@@ -407,7 +417,9 @@ class Hub(object):
         rts = self.osaapi.getResourceTypesByClass(**payload)
         existing_resources = []
         for resource in rts['result']:
-            if sys.version_info.major < 3:
+            if sys.version_info.major < 3 or (
+                    sys.version_info.major == 3 and sys.version_info.minor < 6
+            ):
                 aps_rt = json.loads(
                     self.aps.get('aps/2/services/resource-type-manager/resourceTypes/{}'.format(
                         resource['resource_type_id'])).content.decode('utf-8'))
@@ -421,7 +433,9 @@ class Hub(object):
         return existing_resources
 
     def _find_existing(self, resource, app_id):
-        if sys.version_info.major < 3:
+        if sys.version_info.major < 3 or (
+                sys.version_info.major == 3 and sys.version_info.minor < 6
+        ):
             aps_rt = json.loads(
                 self.aps.get('aps/2/services/resource-type-manager/resourceTypes/{}'.format(
                     resource['resource_type_id'])).content.decode('utf-8'))
@@ -614,7 +628,9 @@ class Hub(object):
         url = 'aps/2/resources?implementing(http://odin.com/servicesSelector/globals/2.0)'
         r = self.aps.get(url)
         try:
-            if sys.version_info.major < 3:
+            if sys.version_info.major < 3 or (
+                    sys.version_info.major == 3 and sys.version_info.minor < 6
+            ):
                 data = json.loads(r.content.decode('utf-8'))
             else:
                 data = json.loads(r.content)
@@ -650,7 +666,9 @@ class Hub(object):
         }
         r = self.aps.post(url, json=payload)
         try:
-            if sys.version_info.major < 3:
+            if sys.version_info.major < 3 or (
+                    sys.version_info.major == 3 and sys.version_info.minor < 6
+            ):
                 data = json.loads(r.content.decode('utf-8'))
             else:
                 data = json.loads(r.content)
