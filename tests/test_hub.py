@@ -117,7 +117,7 @@ class TestHub(TestCase):
                 patch('apsconnectcli.hub.get_config'), \
                 patch('apsconnectcli.hub.osaapi_raise_for_status'), \
                 patch('apsconnectcli.hub.sys') as sys_mock:
-            sys_mock.version_info.major = 3
+            sys_mock.version_info.major = sys.version_info.major
             resp_mock = MagicMock()
             resp_mock.content = b'["aps": {"id": "12345"}}]'
             aps_mock.return_value.get.return_value = resp_mock
