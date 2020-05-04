@@ -2,7 +2,7 @@
 	<img width="40%" src="https://user-images.githubusercontent.com/3930620/80989151-620ae900-8de9-11ea-82a0-aa4223224d9f.png" alt="logo"/>
 </p>
 
-# Warning: Enf of life
+# Warning: End of life is scheduled for January 2021
 
 Functionality of this tool has been superseded by the [CloudBlue Commerce Extension](https://connect.cloudblue.com/documentation/extensions/cloudblue-commerce/) and the end-of-life for this tool is scheduled for January 2021.
 
