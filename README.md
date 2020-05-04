@@ -1,6 +1,10 @@
 <p align="center">
-	<img width="40%" src="https://user-images.githubusercontent.com/3930620/79362219-2c19c980-7efb-11ea-861d-f8ea1a0e4d00.png" alt="logo"/>
+	<img width="40%" src="https://user-images.githubusercontent.com/3930620/80989151-620ae900-8de9-11ea-82a0-aa4223224d9f.png" alt="logo"/>
 </p>
+
+# Warning
+
+Functionality of this tool has been superseded by the [CloudBlue Commerce Extension](https://connect.cloudblue.com/documentation/extensions/cloudblue-commerce/) and the end-of-life for this tool is scheduled for January 2021.
 
 # apsconnect-cli
 _CloudBlue Connect command line tool to automate product lifecycle management for the CloudBlue Commerce._
