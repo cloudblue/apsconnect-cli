@@ -148,7 +148,10 @@ class Hub(object):
         url = 'aps/2/resources?implementing(http://odin.com/servicesSelector/globals/2.0)'
         r = self.aps.get(url)
         try:
-            data = json.loads(r.content.decode('utf-8'))
+            if sys.version_info.major < 3:
+                data = json.loads(r.content.decode('utf-8'))
+            else:
+                data = json.loads(r.content)
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
@@ -161,7 +164,10 @@ class Hub(object):
         r.raise_for_status()
 
         try:
-            data = json.loads(r.content.decode('utf-8'))
+            if sys.version_info.major < 3:
+                data = json.loads(r.content.decode('utf-8'))
+            else:
+                data = json.loads(r.content)
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
@@ -188,7 +194,10 @@ class Hub(object):
         url = '/aps/2/resources/{}'.format(app_instances[0]['application_resource_id'])
         r = self.aps.get(url)
         try:
-            data = json.loads(r.content.decode('utf-8'))
+            if sys.version_info.major < 3:
+                data = json.loads(r.content.decode('utf-8'))
+            else:
+                data = json.loads(r.content)
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
@@ -327,7 +336,10 @@ class Hub(object):
         r = self.aps.post('aps/2/resources/{}/itemInfo'.format(self.extension_id), json=payload)
         try:
             apsapi_raise_for_status(r)
-            data = json.loads(r.content.decode('utf-8'))
+            if sys.version_info.major < 3:
+                data = json.loads(r.content.decode('utf-8'))
+            else:
+                data = json.loads(r.content)
         except ValueError:
             print("Error while decoding item information")
             sys.exit(1)
@@ -377,7 +389,10 @@ class Hub(object):
         r = self.aps.get('aps/2/resources?implementing({}/{}/{}.{})'.format(
             package.connector_id, "itemProfile", package.version, package.release))
         try:
-            data = json.loads(r.content.decode('utf-8'))
+            if sys.version_info.major < 3:
+                data = json.loads(r.content.decode('utf-8'))
+            else:
+                data = json.loads(r.content)
             if data[0]['aps']['id']:
                 return True
             return False
@@ -392,18 +407,28 @@ class Hub(object):
         rts = self.osaapi.getResourceTypesByClass(**payload)
         existing_resources = []
         for resource in rts['result']:
-            aps_rt = json.loads(
-                self.aps.get('aps/2/services/resource-type-manager/resourceTypes/{}'.format(
-                    resource['resource_type_id'])).content.decode('utf-8'))
+            if sys.version_info.major < 3:
+                aps_rt = json.loads(
+                    self.aps.get('aps/2/services/resource-type-manager/resourceTypes/{}'.format(
+                        resource['resource_type_id'])).content.decode('utf-8'))
+            else:
+                aps_rt = json.loads(
+                    self.aps.get('aps/2/services/resource-type-manager/resourceTypes/{}'.format(
+                        resource['resource_type_id'])).content)
             if 'app_id' in aps_rt['activationParameters'] and int(aps_rt['activationParameters'][
                                                                       'app_id']) == int(app_id):
                 existing_resources.append(aps_rt['activationParameters']['resource_id'])
         return existing_resources
 
     def _find_existing(self, resource, app_id):
-        aps_rt = json.loads(
-            self.aps.get('aps/2/services/resource-type-manager/resourceTypes/{}'.format(
-                resource['resource_type_id'])).content.decode('utf-8'))
+        if sys.version_info.major < 3:
+            aps_rt = json.loads(
+                self.aps.get('aps/2/services/resource-type-manager/resourceTypes/{}'.format(
+                    resource['resource_type_id'])).content.decode('utf-8'))
+        else:
+            aps_rt = json.loads(
+                self.aps.get('aps/2/services/resource-type-manager/resourceTypes/{}'.format(
+                    resource['resource_type_id'])).content)
         if 'app_id' in aps_rt['activationParameters'] and int(
                 aps_rt['activationParameters'][
                     'app_id']) == int(app_id):
@@ -589,7 +614,10 @@ class Hub(object):
         url = 'aps/2/resources?implementing(http://odin.com/servicesSelector/globals/2.0)'
         r = self.aps.get(url)
         try:
-            data = json.loads(r.content.decode('utf-8'))
+            if sys.version_info.major < 3:
+                data = json.loads(r.content.decode('utf-8'))
+            else:
+                data = json.loads(r.content)
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
@@ -622,7 +650,10 @@ class Hub(object):
         }
         r = self.aps.post(url, json=payload)
         try:
-            data = json.loads(r.content.decode('utf-8'))
+            if sys.version_info.major < 3:
+                data = json.loads(r.content.decode('utf-8'))
+            else:
+                data = json.loads(r.content)
             if data.get('id'):
                 return data
             print("ERROR: Product {} has no connection to this HUB.\n".format(product_id) +
