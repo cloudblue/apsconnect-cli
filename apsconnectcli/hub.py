@@ -15,6 +15,15 @@ RPC_CONNECT_PARAMS = ('host', 'user', 'password', 'ssl', 'port')
 APS_CONNECT_PARAMS = ('aps_host', 'aps_port', 'use_tls_aps')
 
 
+def json_decode(content):
+    if sys.version_info.major < 3 or (
+            sys.version_info.major == 3 and sys.version_info.minor < 6
+    ):
+        return json.loads(content.decode('utf-8'))
+
+    return json.loads(content)
+
+
 def osaapi_raise_for_status(r):
     if r['status']:
         if 'error_message' in r:
@@ -148,12 +157,7 @@ class Hub(object):
         url = 'aps/2/resources?implementing(http://odin.com/servicesSelector/globals/2.0)'
         r = self.aps.get(url)
         try:
-            if sys.version_info.major < 3 or (
-                    sys.version_info.major == 3 and sys.version_info.minor < 6
-            ):
-                data = json.loads(r.content.decode('utf-8'))
-            else:
-                data = json.loads(r.content)
+            data = json_decode(r.content)
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
@@ -166,12 +170,7 @@ class Hub(object):
         r.raise_for_status()
 
         try:
-            if sys.version_info.major < 3 or (
-                    sys.version_info.major == 3 and sys.version_info.minor < 6
-            ):
-                data = json.loads(r.content.decode('utf-8'))
-            else:
-                data = json.loads(r.content)
+            data = json_decode(r.content)
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
@@ -198,12 +197,7 @@ class Hub(object):
         url = '/aps/2/resources/{}'.format(app_instances[0]['application_resource_id'])
         r = self.aps.get(url)
         try:
-            if sys.version_info.major < 3 or (
-                    sys.version_info.major == 3 and sys.version_info.minor < 6
-            ):
-                data = json.loads(r.content.decode('utf-8'))
-            else:
-                data = json.loads(r.content)
+            data = json_decode(r.content)
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
@@ -342,12 +336,7 @@ class Hub(object):
         r = self.aps.post('aps/2/resources/{}/itemInfo'.format(self.extension_id), json=payload)
         try:
             apsapi_raise_for_status(r)
-            if sys.version_info.major < 3 or (
-                    sys.version_info.major == 3 and sys.version_info.minor < 6
-            ):
-                data = json.loads(r.content.decode('utf-8'))
-            else:
-                data = json.loads(r.content)
+            data = json_decode(r.content)
         except ValueError:
             print("Error while decoding item information")
             sys.exit(1)
@@ -397,12 +386,7 @@ class Hub(object):
         r = self.aps.get('aps/2/resources?implementing({}/{}/{}.{})'.format(
             package.connector_id, "itemProfile", package.version, package.release))
         try:
-            if sys.version_info.major < 3 or (
-                    sys.version_info.major == 3 and sys.version_info.minor < 6
-            ):
-                data = json.loads(r.content.decode('utf-8'))
-            else:
-                data = json.loads(r.content)
+            data = json_decode(r.content)
             if data[0]['aps']['id']:
                 return True
             return False
@@ -628,12 +612,7 @@ class Hub(object):
         url = 'aps/2/resources?implementing(http://odin.com/servicesSelector/globals/2.0)'
         r = self.aps.get(url)
         try:
-            if sys.version_info.major < 3 or (
-                    sys.version_info.major == 3 and sys.version_info.minor < 6
-            ):
-                data = json.loads(r.content.decode('utf-8'))
-            else:
-                data = json.loads(r.content)
+            data = json_decode(r.content)
         except ValueError:
             print("APSController provided non-json format")
             sys.exit(1)
@@ -666,12 +645,7 @@ class Hub(object):
         }
         r = self.aps.post(url, json=payload)
         try:
-            if sys.version_info.major < 3 or (
-                    sys.version_info.major == 3 and sys.version_info.minor < 6
-            ):
-                data = json.loads(r.content.decode('utf-8'))
-            else:
-                data = json.loads(r.content)
+            data = json_decode(r.content)
             if data.get('id'):
                 return data
             print("ERROR: Product {} has no connection to this HUB.\n".format(product_id) +
