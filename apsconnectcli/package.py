@@ -84,9 +84,15 @@ class Package(object):
         resources = {}
 
         for key in self.tenant_properties:
-            if self.tenant_properties[key]['type'] in resource_types and key.decode(
-                    'utf-8') != 'COUNTRY':
-                resources[key] = self.tenant_properties[key]
+            if sys.version_info.major < 3 or (
+                    sys.version_info.major == 3 and sys.version_info.minor < 6
+            ):
+                if self.tenant_properties[key]['type'] in resource_types and key.decode(
+                        'utf-8') != 'COUNTRY':
+                    resources[key] = self.tenant_properties[key]
+            else:
+                if self.tenant_properties[key]['type'] in resource_types and key != 'COUNTRY':
+                    resources[key] = self.tenant_properties[key]
 
         return resources
 
