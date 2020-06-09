@@ -473,7 +473,7 @@ class Hub(object):
             resource_uid = self._create_service_profile(package, counter, title)
             payload = {
                 'resclass_name': 'rc.saas.countedlenk',
-                'name': title,
+                'name': title[:60],
                 'act_params': [
                     {
                         'var_name': 'app_id',
@@ -517,7 +517,7 @@ class Hub(object):
             oa_unit_type = Hub._get_resclass_name(schema['unit'])
             payload = {
                 'resclass_name': oa_unit_type,
-                'name': '{}'.format(schema.get('title')),
+                'name': '{}'.format(schema.get('title'))[:60],
                 'act_params': [
                     {
                         'var_name': 'app_id',
