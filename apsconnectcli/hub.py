@@ -348,8 +348,8 @@ class Hub(object):
     def _create_service_profile(self, package, counter, title):
         item_info = self._get_item_info_from_local_id(package.product_id, counter)
         payload = {
-            'aps': {'type': '{}/{}/{}.{}'.format(
-                package.connector_id, "itemProfile", package.version, package.release)},
+            'aps': {'type': '{}/{}/99.{}'.format(
+                package.connector_id, "itemProfile", package.release)},
             'profileName': title,
             'mpn': item_info.get('mpn'),
             'itemId': item_info.get('id'),
@@ -358,15 +358,22 @@ class Hub(object):
         r = self.aps.post('aps/2/resources/', json=payload)
         try:
             r.raise_for_status()
-        except Exception as e:
-            if 'error' in r.json():
-                err = "{} {}".format(r.json()['error'], r.json()['message'])
-            else:
-                err = str(e)
-            print("ERROR: Adding service profile {} FAILED.\n"
-                  "Hub APS API response {} code.\n"
-                  "Error: {}".format(counter, r.status_code, err))
-            sys.exit(1)
+        except Exception:
+            payload['aps']['type'] = '{}/{}/{}.{}'.format(
+                package.connector_id, "itemProfile", package.version, package.release
+            )
+            r = self.aps.post('aps/2/resources/', json=payload)
+            try:
+                r.raise_for_status()
+            except Exception as e:
+                if 'error' in r.json():
+                    err = "{} {}".format(r.json()['error'], r.json()['message'])
+                else:
+                    err = str(e)
+                print("ERROR: Adding service profile {} FAILED.\n"
+                      "Hub APS API response {} code.\n"
+                      "Error: {}".format(counter, r.status_code, err))
+                sys.exit(1)
 
         return r.json()['aps']['id']
 
@@ -383,10 +390,15 @@ class Hub(object):
         return r.json()
 
     def _exists_item_profile_resource(self, package):
-        r = self.aps.get('aps/2/resources?implementing({}/{}/{}.{})'.format(
-            package.connector_id, "itemProfile", package.version, package.release))
+        r = self.aps.get('aps/2/resources?implementing({}/{}/99.{})'.format(
+            package.connector_id, "itemProfile", package.release))
         try:
-            data = json_decode(r.content)
+            data = json.loads(r.content.decode('utf-8'))
+            if data[0]['aps']['id']:
+                return True
+            r = self.aps.get('aps/2/resources?implementing({}/{}/{}.{})'.format(
+                package.connector_id, "itemProfile", package.version, package.release
+            ))
             if data[0]['aps']['id']:
                 return True
             return False
