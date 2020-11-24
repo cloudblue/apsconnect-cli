@@ -1,3 +1,4 @@
+pyinstaller==3.6
 fire==0.1.2
 future==0.16.0
 osaapi==0.3.12
